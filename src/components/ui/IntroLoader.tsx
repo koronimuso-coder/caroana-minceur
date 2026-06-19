@@ -76,11 +76,11 @@ export default function IntroLoader() {
 
         {/* Logo and SVG Path Drawing */}
         <div className="w-full flex flex-col items-center">
-          <svg viewBox="0 0 300 90" className="w-64 h-auto text-theme-accent fill-none stroke-[2.5] stroke-current">
+          <svg viewBox="0 0 100 100" className="w-32 h-auto text-theme-accent fill-none stroke-[2] stroke-current">
             <path 
-              d="M 20,60 C 40,40 70,10 90,40 C 100,55 80,75 110,60 C 130,50 140,20 150,40 C 160,60 170,70 190,55 C 210,40 220,20 230,45 C 240,70 250,65 270,50" 
-              strokeDasharray="600" 
-              strokeDashoffset={600 - (progress / 100) * 600}
+              d="M 25,10 C 42,30 42,70 25,90 M 75,10 C 58,30 58,70 75,90 M 50,20 C 35,35 35,65 50,80 C 65,65 65,35 50,20 M 50,20 L 50,85 M 50,40 Q 42,35 38,38 M 50,40 Q 58,35 62,38 M 50,55 Q 40,50 36,55 M 50,55 Q 60,50 64,55" 
+              strokeDasharray="500" 
+              strokeDashoffset={500 - (progress / 100) * 500}
               className="transition-all duration-300 ease-out"
             />
           </svg>

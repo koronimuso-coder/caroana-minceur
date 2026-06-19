@@ -7,6 +7,7 @@ import ScrollReveal from "@/components/ui/ScrollReveal";
 import Marquee from "@/components/ui/Marquee";
 import RitualQuiz from "@/components/ui/RitualQuiz";
 import HydrationCalculator from "@/components/ui/HydrationCalculator";
+import CureTracker from "@/components/ui/CureTracker";
 
 export default function HomePage() {
   const [signatureOffset, setSignatureOffset] = useState(600);
@@ -66,12 +67,12 @@ export default function HomePage() {
   ];
 
   const partners = [
-    { name: "LN KART", logo: "LN KART" },
-    { name: "BELL HELMETS", logo: "BELL" },
-    { name: "PURE ELECTRIC", logo: "PURE" },
-    { name: "GOOGLE", logo: "Google" },
-    { name: "RALPH LAUREN", logo: "Ralph Lauren" },
-    { name: "PLAYSTATION", logo: "PlayStation" },
+    { name: "100% NATUREL", logo: "100% BIO" },
+    { name: "KINKÉLIBA", logo: "KINKÉLIBA" },
+    { name: "CITRONNELLE", logo: "CITRONNELLE" },
+    { name: "THÉ VERT", logo: "THÉ VERT" },
+    { name: "FABRIQUÉ EN CIV", logo: "MADE IN CIV" },
+    { name: "SANS ADDITIFS", logo: "SANS ADDITIFS" },
   ];
 
   return (
@@ -101,15 +102,15 @@ export default function HomePage() {
           
           <ScrollReveal animation="fade-up" delay={200} duration={1000}>
             <h1 className="font-sans text-6xl sm:text-9xl font-black leading-[0.85] tracking-tighter uppercase select-none">
-              PURE. <br />
-              <span className="text-theme-accent">NATURAL.</span> <br />
-              LEGACY.
+              PURETÉ. <br />
+              <span className="text-theme-accent">NATURE.</span> <br />
+              HÉRITAGE.
             </h1>
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={400} duration={1000}>
             <p className="text-xs sm:text-sm text-theme-fg/80 max-w-md mx-auto leading-relaxed font-medium pt-4">
-              L'excellence du bien-être ancestral ivoirien. Des formulations pures et actives pour sublimer votre silhouette.
+              L'excellence du bien-être ancestral ivoirien. Des formulations de plantes pures et actives pour sculpter votre silhouette naturellement.
             </p>
           </ScrollReveal>
 
@@ -171,8 +172,8 @@ export default function HomePage() {
       <section className="py-24 sm:py-36 bg-theme-bg border-t border-theme-border z-20 relative transition-colors duration-500">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <ScrollReveal animation="fade-up" duration={1000}>
-            <h2 className="font-sans text-4xl sm:text-7xl font-black text-center uppercase tracking-tight leading-[0.95]">
-              BRINGING THE PUREST <span className="font-serif italic lowercase text-theme-accent font-normal">botanicals</span> TO YOUR ROUTINE. DEFINING A <span className="font-serif italic lowercase text-theme-accent font-normal">legacy</span> OF WELLNESS <span className="font-serif italic lowercase text-theme-accent font-normal">on and off</span> THE TRACK.
+            <h2 className="font-sans text-4xl sm:text-6xl font-black text-center uppercase tracking-tight leading-[0.95]">
+              INTÉGRER LA PURETÉ DES <span className="font-serif italic lowercase text-theme-accent font-normal">plantes</span> DANS VOTRE QUOTIDIEN. DÉFINIR UN <span className="font-serif italic lowercase text-theme-accent font-normal">héritage</span> DE BIEN-ÊTRE <span className="font-serif italic lowercase text-theme-accent font-normal">au jour le jour</span> ET DURABLE.
             </h2>
           </ScrollReveal>
         </div>
@@ -202,7 +203,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-between items-center mt-3 text-[8px] font-bold font-mono tracking-widest text-theme-fg/45 uppercase">
                   <span>ABIDJAN, 2026</span>
-                  <span>KINKELIBA HARVEST</span>
+                  <span>RÉCOLTE KINKÉLIBA</span>
                 </div>
               </ScrollReveal>
             </div>
@@ -235,8 +236,8 @@ export default function HomePage() {
                   />
                 </div>
                 <div className="flex justify-between items-center mt-3 text-[8px] font-bold font-mono tracking-widest text-theme-fg/45 uppercase">
-                  <span>CIV CURE</span>
-                  <span>VENTRE PLAT CAPSULES</span>
+                  <span>CÔTE D'IVOIRE</span>
+                  <span>GÉLULES VENTRE PLAT</span>
                 </div>
               </ScrollReveal>
             </div>
@@ -250,6 +251,15 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-6">
           <ScrollReveal animation="scale-up">
             <RitualQuiz />
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ================== SECTION: CURE PROGRESS TRACKER ================== */}
+      <section className="py-12 bg-theme-bg z-20 relative transition-colors duration-500">
+        <div className="max-w-4xl mx-auto px-6">
+          <ScrollReveal animation="scale-up">
+            <CureTracker />
           </ScrollReveal>
         </div>
       </section>
@@ -302,7 +312,7 @@ export default function HomePage() {
                 <div className="absolute bottom-0 right-0 bg-theme-bg border-t border-l border-theme-border rounded-tl-xl px-4 py-2 flex items-center space-x-2 z-20 pointer-events-none group-hover:border-theme-accent/20 transition-colors duration-500">
                   <span className="text-[9px] font-bold text-theme-accent tracking-wide">{p.price}</span>
                   <span className="text-theme-fg/20">|</span>
-                  <span className="text-[8px] font-mono text-theme-fg/40 uppercase">{p.season}</span>
+                  <span className="text-[8px] font-mono text-theme-fg/40 uppercase">Cure 2026</span>
                 </div>
 
                 {/* Hover Quick action link */}
@@ -335,9 +345,9 @@ export default function HomePage() {
       <section className="relative py-28 sm:py-40 bg-theme-fg text-theme-bg pattern-contour border-y border-theme-border z-20 transition-colors duration-500">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row md:items-center justify-between gap-12 relative z-10">
           <div className="space-y-4 max-w-xl">
-            <span className="text-[9px] font-bold tracking-[0.25em] text-theme-bg/50 uppercase block">Shop Collection</span>
+            <span className="text-[9px] font-bold tracking-[0.25em] text-theme-bg/50 uppercase block">Cures Actives</span>
             <h2 className="font-sans text-4xl sm:text-6xl font-black uppercase tracking-tighter leading-none text-theme-bg">
-              WORLD-CLASS WELL-BEING DELIVERED TO YOUR DOOR.
+              LE BIEN-ÊTRE NATUREL LIVRÉ DIRECTEMENT CHEZ VOUS.
             </h2>
             <p className="text-xs text-theme-bg/70 leading-relaxed max-w-sm">
               Commandez nos cures et tisanes en ligne. Livraison rapide sur Abidjan et expédition sous 48h dans toute la sous-région.
@@ -394,8 +404,8 @@ export default function HomePage() {
           {/* Top Always Bringing the fight text */}
           <div className="space-y-4">
             <h2 className="font-sans text-4xl sm:text-7xl font-black uppercase tracking-tighter leading-none">
-              ALWAYS BRINGING <br />
-              THE PUREST <span className="font-serif italic lowercase text-theme-accent font-normal">well-being.</span>
+              GARANTIR TOUJOURS <br />
+              LE BIEN-ÊTRE <span className="font-serif italic lowercase text-theme-accent font-normal">le plus pur.</span>
             </h2>
             
             <div className="flex justify-center pt-3">
@@ -413,23 +423,23 @@ export default function HomePage() {
               <span className="text-[8px] font-bold text-theme-fg/30 uppercase tracking-[0.25em] block">Pages</span>
               <ul className="space-y-3 text-sm font-black uppercase tracking-wider">
                 <li>
-                  <Link href="/" className="hover:text-theme-accent transition-smooth">Home</Link>
+                  <Link href="/" className="hover:text-theme-accent transition-smooth">Accueil</Link>
                 </li>
                 <li>
-                  <Link href="/boutique" className="text-theme-accent hover:text-theme-accent-hover transition-smooth">Store</Link>
+                  <Link href="/boutique" className="text-theme-accent hover:text-theme-accent-hover transition-smooth">Boutique</Link>
                 </li>
                 <li>
-                  <Link href="/a-propos" className="hover:text-theme-accent transition-smooth">Philosophy</Link>
+                  <Link href="/a-propos" className="hover:text-theme-accent transition-smooth">Philosophie</Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="hover:text-theme-accent transition-smooth">Questions</Link>
+                  <Link href="/faq" className="hover:text-theme-accent transition-smooth">FAQ</Link>
                 </li>
               </ul>
             </div>
 
             {/* Socials column */}
             <div className="col-span-12 md:col-span-6 space-y-4 md:text-right">
-              <span className="text-[8px] font-bold text-theme-fg/30 uppercase tracking-[0.25em] block">Follow on</span>
+              <span className="text-[8px] font-bold text-theme-fg/30 uppercase tracking-[0.25em] block">Nous suivre</span>
               <ul className="space-y-3 text-sm font-black uppercase tracking-wider">
                 <li>
                   <a 
@@ -460,7 +470,7 @@ export default function HomePage() {
                     rel="noopener noreferrer" 
                     className="hover:text-theme-accent transition-smooth inline-flex items-center space-x-1.5 justify-end"
                   >
-                    <span>WhatsApp Order</span>
+                    <span>Commande WhatsApp</span>
                     <MessageCircle className="w-3.5 h-3.5" />
                   </a>
                 </li>
