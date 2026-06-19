@@ -1,351 +1,651 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Search, SlidersHorizontal, ShoppingCart, MessageCircle, Heart, Sparkles, Sliders } from "lucide-react";
+import { ShoppingCart, MessageCircle, Sparkles, Tag, Package, Zap, ArrowRight, Star, Clock } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import { Product } from "@/types";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
-export default function BoutiquePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("recent");
+// =====================================================================
+// CATALOGUE COMPLET — Produits individuels
+// =====================================================================
+const PRODUITS = [
+  {
+    id: "p1", slug: "gelules-ventre-plat", sku: "GVP-01",
+    name: "Gélules Ventre Plat",
+    shortDescription: "Formule botanique ciblant la sangle abdominale.",
+    productType: "capsules",
+    price: 10000, compareAtPrice: null,
+    badge: null, promo: false,
+    icon: "💊",
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
+  {
+    id: "p-kaylie", slug: "gelules-kaylie", sku: "GK-01",
+    name: "Gélules Minceur Kaylie",
+    shortDescription: "Cure 1 mois · Perte de 9 kg à plus · Premium.",
+    productType: "capsules",
+    price: 25000, compareAtPrice: null,
+    badge: "⭐ Premium", promo: false,
+    icon: "💎",
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    stock: 50,
+    detail: "Cure d'un mois · Perdre de 9 kg à plus",
+  },
+  {
+    id: "p-skinny", slug: "gelules-skinny", sku: "GS-01",
+    name: "Gélules Minceur Skinny",
+    shortDescription: "Cure 1 semaine · Perte de 1 kg à 9 kg.",
+    productType: "capsules",
+    price: 15000, compareAtPrice: null,
+    badge: "⚡ Express", promo: false,
+    icon: "⚡",
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    stock: 80,
+    detail: "Cure d'une semaine · Perdre de 1 kg à 9 kg",
+  },
+  {
+    id: "p2", slug: "the-detox", sku: "TD-01",
+    name: "Thé Détox",
+    shortDescription: "Kinkéliba & Citronnelle — Drainage & énergie.",
+    productType: "tea",
+    price: 5000, compareAtPrice: null,
+    badge: null, promo: false,
+    icon: "🍵",
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
+  {
+    id: "p3", slug: "tisane-ventre-plat", sku: "TVP-01",
+    name: "Tisane Ventre Plat",
+    shortDescription: "Formule ancestrale — Légèreté & confort digestif.",
+    productType: "herbal_tea",
+    price: 5000, compareAtPrice: null,
+    badge: null, promo: false,
+    icon: "🌿",
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
+  {
+    id: "p-tisane-m", slug: "tisane-minceur", sku: "TM-01",
+    name: "Tisane Minceur",
+    shortDescription: "Drainage & affinage silhouette — Plantes africaines.",
+    productType: "herbal_tea",
+    price: 8000, compareAtPrice: null,
+    badge: null, promo: false,
+    icon: "🌱",
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
+  {
+    id: "p-produit-m", slug: "produit-minceur", sku: "PM-01",
+    name: "Produit Minceur",
+    shortDescription: "Formulation complémentaire minceur.",
+    productType: "supplement",
+    price: 8000, compareAtPrice: null,
+    badge: null, promo: false,
+    icon: "🫙",
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+    stock: 60,
+  },
+];
 
+// =====================================================================
+// PACKS
+// =====================================================================
+const PACKS = [
+  {
+    id: "pack-1", slug: "pack-gelules-the",
+    name: "Pack Gélules + Thé Détox",
+    shortDescription: "Gélules Ventre Plat + Thé Détox",
+    price: 14000, compareAtPrice: 15000,
+    icon: "🔥",
+    color: "from-amber-500/10 to-amber-700/5",
+    items: ["Gélules Ventre Plat (10 000 F)", "Thé Détox (5 000 F)"],
+    saving: 1000,
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-2", slug: "pack-gelules-tisane",
+    name: "Pack Gélules + Tisane",
+    shortDescription: "Gélules Ventre Plat + Tisane Ventre Plat",
+    price: 14000, compareAtPrice: 15000,
+    icon: "🌿",
+    color: "from-emerald-500/10 to-emerald-700/5",
+    items: ["Gélules Ventre Plat (10 000 F)", "Tisane Ventre Plat (5 000 F)"],
+    saving: 1000,
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-3", slug: "pack-the-tisane",
+    name: "Pack Thé + Tisane",
+    shortDescription: "Thé Détox + Tisane Ventre Plat",
+    price: 10000, compareAtPrice: 10000,
+    icon: "🍃",
+    color: "from-teal-500/10 to-teal-700/5",
+    items: ["Thé Détox (5 000 F)", "Tisane Ventre Plat (5 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-complet", slug: "pack-complet-3-produits",
+    name: "Pack Complet 3 Produits",
+    shortDescription: "Gélules + Thé Détox + Tisane",
+    price: 19000, compareAtPrice: 20000,
+    icon: "⭐",
+    color: "from-yellow-500/10 to-yellow-700/5",
+    items: ["Gélules Ventre Plat (10 000 F)", "Thé Détox (5 000 F)", "Tisane Ventre Plat (5 000 F)"],
+    saving: 1000,
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    featured: true,
+  },
+  {
+    id: "pack-kaylie-the", slug: "pack-kaylie-the-detox",
+    name: "Pack Gélules Kaylie + Thé Détox",
+    shortDescription: "Cure premium 1 mois + Drainage quotidien",
+    price: 30000, compareAtPrice: 30000,
+    icon: "💎",
+    color: "from-purple-500/10 to-purple-700/5",
+    items: ["Gélules Kaylie (25 000 F)", "Thé Détox (5 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-kaylie-minceur", slug: "pack-kaylie-tisane-minceur",
+    name: "Pack Gélules Kaylie + Tisane Minceur",
+    shortDescription: "Transformation totale : gélules + tisane",
+    price: 33000, compareAtPrice: 33000,
+    icon: "👑",
+    color: "from-pink-500/10 to-pink-700/5",
+    items: ["Gélules Kaylie (25 000 F)", "Tisane Minceur (8 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-skinny-the", slug: "pack-skinny-the-detox",
+    name: "Pack Gélules Skinny + Thé Détox",
+    shortDescription: "Résultats rapides 1 semaine + drainage",
+    price: 20000, compareAtPrice: 20000,
+    icon: "⚡",
+    color: "from-blue-500/10 to-blue-700/5",
+    items: ["Gélules Skinny (15 000 F)", "Thé Détox (5 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-skinny-tisane", slug: "pack-skinny-tisane-minceur",
+    name: "Pack Gélules Skinny + Tisane Minceur",
+    shortDescription: "Express 1 semaine + tisane drainante",
+    price: 23000, compareAtPrice: 23000,
+    icon: "🌟",
+    color: "from-orange-500/10 to-orange-700/5",
+    items: ["Gélules Skinny (15 000 F)", "Tisane Minceur (8 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-minceur-kaylie", slug: "pack-minceur-kaylie-complet",
+    name: "Pack Minceur Kaylie — 3 Produits",
+    shortDescription: "Le pack complet transformation Kaylie",
+    price: 38000, compareAtPrice: 38000,
+    icon: "💎",
+    color: "from-violet-500/10 to-violet-700/5",
+    items: ["Gélules Kaylie (25 000 F)", "Thé Détox (5 000 F)", "Tisane Minceur (8 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    featured: true,
+  },
+  {
+    id: "pack-minceur-skinny", slug: "pack-minceur-skinny-complet",
+    name: "Pack Minceur Skinny — 3 Produits",
+    shortDescription: "Le pack complet rapide Skinny",
+    price: 28000, compareAtPrice: 28000,
+    icon: "⚡",
+    color: "from-cyan-500/10 to-cyan-700/5",
+    items: ["Gélules Skinny (15 000 F)", "Thé Détox (5 000 F)", "Tisane Minceur (8 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+  },
+];
+
+// =====================================================================
+// LIVRAISON
+// =====================================================================
+const LIVRAISON = [
+  { zone: "Abidjan", tarif: "1 000 – 1 500 F CFA", icon: "🏙️" },
+  { zone: "Hors Abidjan", tarif: "2 500 F CFA", icon: "🌍" },
+];
+
+// =====================================================================
+// CATÉGORIES FILTRES
+// =====================================================================
+const CATEGORIES = [
+  { label: "Tous les rituels", val: "all" },
+  { label: "Produits seuls", val: "solo" },
+  { label: "Packs & Duos", val: "packs" },
+  { label: "Gélules", val: "capsules" },
+  { label: "Thés & Tisanes", val: "infusions" },
+];
+
+export default function BoutiquePage() {
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const addItem = useCart((state) => state.addItem);
 
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        const res = await fetch("/api/products?status=published");
-        const data = await res.json();
-        if (data.success) {
-          setProducts(data.products);
-        } else {
-          // Fallback initial products if database is empty/not seeded yet
-          setProducts([
-            {
-              id: "p1",
-              slug: "gelules-ventre-plat",
-              sku: "GVP-01",
-              name: "Gélules Ventre Plat",
-              shortDescription: "Confort digestif et légèreté au naturel.",
-              description: "Gélules naturelles...",
-              productType: "capsules",
-              status: "published",
-              price: null, // Draft price initially
-              compareAtPrice: null,
-              costPrice: null,
-              currency: "XOF",
-              taxable: false,
-              stock: 100,
-              trackInventory: true,
-              lowStockThreshold: 10,
-              allowBackorder: false,
-              images: [{ url: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop", alt: "Gélules", order: 1 }],
-              benefits: [], ingredients: [], usageInstructions: [], precautions: [], warnings: [],
-              seo: { title: "", description: "", keywords: [], canonicalUrl: null },
-              dimensions: { length: null, width: null, height: null },
-              nutritionalInformation: null, weight: null, tags: [], categoryId: "", collectionIds: [],
-              featured: true, publishedAt: null, createdAt: new Date() as any, updatedAt: new Date() as any,
-              createdBy: "admin", updatedBy: "admin", variants: []
-            },
-            {
-              id: "p2",
-              slug: "the-detox",
-              sku: "TD-01",
-              name: "Thé Détox",
-              shortDescription: "Aide à soutenir l'élimination naturelle.",
-              description: "Thé détox...",
-              productType: "tea",
-              status: "published",
-              price: null,
-              compareAtPrice: null,
-              costPrice: null,
-              currency: "XOF",
-              taxable: false,
-              stock: 50,
-              trackInventory: true,
-              lowStockThreshold: 5,
-              allowBackorder: false,
-              images: [{ url: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop", alt: "Thé Détox", order: 1 }],
-              benefits: [], ingredients: [], usageInstructions: [], precautions: [], warnings: [],
-              seo: { title: "", description: "", keywords: [], canonicalUrl: null },
-              dimensions: { length: null, width: null, height: null },
-              nutritionalInformation: null, weight: null, tags: [], categoryId: "", collectionIds: [],
-              featured: true, publishedAt: null, createdAt: new Date() as any, updatedAt: new Date() as any,
-              createdBy: "admin", updatedBy: "admin", variants: []
-            },
-            {
-              id: "p3",
-              slug: "tisane-ventre-plat",
-              sku: "TVP-01",
-              name: "Tisane Ventre Plat",
-              shortDescription: "Formule traditionnelle de plantes et racines.",
-              description: "Tisane naturelle...",
-              productType: "herbal_tea",
-              status: "published",
-              price: null,
-              compareAtPrice: null,
-              costPrice: null,
-              currency: "XOF",
-              taxable: false,
-              stock: 80,
-              trackInventory: true,
-              lowStockThreshold: 10,
-              allowBackorder: false,
-              images: [{ url: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop", alt: "Tisane", order: 1 }],
-              benefits: [], ingredients: [], usageInstructions: [], precautions: [], warnings: [],
-              seo: { title: "", description: "", keywords: [], canonicalUrl: null },
-              dimensions: { length: null, width: null, height: null },
-              nutritionalInformation: null, weight: null, tags: [], categoryId: "", collectionIds: [],
-              featured: true, publishedAt: null, createdAt: new Date() as any, updatedAt: new Date() as any,
-              createdBy: "admin", updatedBy: "admin", variants: []
-            }
-          ]);
-        }
-      } catch (err) {
-        console.error("Failed to load products:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadProducts();
-  }, []);
-
-  // Filter & Search Logic
-  const filteredProducts = products
-    .filter((p) => {
-      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
-                          p.shortDescription.toLowerCase().includes(search.toLowerCase());
-      const matchType = selectedType === "all" || p.productType === selectedType;
-      return matchSearch && matchType;
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-asc") return (a.price || 0) - (b.price || 0);
-      if (sortBy === "price-desc") return (b.price || 0) - (a.price || 0);
-      if (sortBy === "alpha") return a.name.localeCompare(b.name);
-      return 0; // default recent
-    });
-
-  const getWhatsAppLink = (productName: string) => {
-    const message = encodeURIComponent(
-      `Bonjour CAROANA MINCEUR, je souhaite commander le produit « ${productName} ».`
+  const getWhatsAppLink = (name: string, price: number) => {
+    const msg = encodeURIComponent(
+      `Bonjour CAROANA MINCEUR 🌿, je souhaite commander : « ${name} » à ${price.toLocaleString("fr-FR")} F CFA. Merci de me confirmer la disponibilité.`
     );
-    return `https://wa.me/2250143655088?text=${message}`;
+    return `https://wa.me/2250143655088?text=${msg}`;
   };
 
-  const formatPrice = (price: number | null) => {
-    if (price === null) return "Tarif à configurer";
-    return `${price.toLocaleString("fr-FR")} FCFA`;
-  };
+  // Filter logic
+  const showSolo = activeTab === "all" || activeTab === "solo" || activeTab === "capsules" || activeTab === "infusions";
+  const showPacks = activeTab === "all" || activeTab === "packs";
+
+  const filteredProduits = PRODUITS.filter((p) => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.shortDescription.toLowerCase().includes(search.toLowerCase());
+    const matchCat = activeTab === "all" || activeTab === "solo" ||
+      (activeTab === "capsules" && p.productType === "capsules") ||
+      (activeTab === "infusions" && (p.productType === "tea" || p.productType === "herbal_tea" || p.productType === "supplement"));
+    return matchSearch && matchCat;
+  });
+
+  const filteredPacks = PACKS.filter((p) => {
+    return p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.shortDescription.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
-    <div className="pt-16 min-h-screen bg-theme-bg text-theme-fg transition-colors duration-500">
-      
-      {/* 12-COLUMN MAIN BLUEPRINT GRID */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-12 grid-blueprint border-b border-theme-border">
-        
-        {/* ================== LEFT FILTER PANEL (Col 3) ================== */}
-        <aside className="col-span-12 md:col-span-3 grid-cell p-8 space-y-8 flex flex-col justify-start md:min-h-screen">
-          <div className="flex justify-between items-center border-b border-theme-border pb-4">
-            <div className="flex items-center space-x-2">
-              <Sliders className="w-4 h-4 text-theme-accent" />
-              <span className="text-[10px] font-bold tracking-widest uppercase">Paramètres filtres</span>
-            </div>
-            <span className="text-[8px] font-mono text-theme-fg/30">Index v1.2</span>
-          </div>
+    <div className="pt-16 min-h-screen transition-colors duration-500" style={{ background: "var(--color-theme-bg)", color: "var(--color-theme-fg)" }}>
 
-          {/* Search Module */}
-          <div className="space-y-3">
-            <label className="text-[8px] font-bold tracking-widest uppercase text-theme-fg/50">Rechercher</label>
-            <div className="relative">
-              <Search className="w-4 h-4 text-theme-fg/40 absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* ====== PROMO BANNER ====== */}
+      <div
+        className="w-full py-3 px-4 text-center text-[10px] font-bold uppercase tracking-widest"
+        style={{
+          background: "var(--color-theme-accent)",
+          color: "var(--color-theme-bg)",
+          animation: "pulse-glow 4s ease-in-out infinite",
+        }}
+      >
+        <Tag className="inline w-3 h-3 mr-1" />
+        🎁 PROMO : Tisane Ventre Plat & Thé Détox — 3 paquets à 10 000 F au lieu de 15 000 F &nbsp;|&nbsp; Livraison Abidjan dès 1 000 F CFA
+      </div>
+
+      {/* ====== HEADER SECTION ====== */}
+      <div className="border-b" style={{ borderColor: "var(--color-theme-border)" }}>
+        <div className="max-w-7xl mx-auto px-6 py-14 space-y-6">
+          <ScrollReveal animation="fade-up">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-3 h-3" style={{ color: "var(--color-theme-accent)" }} />
+              <span className="text-[9px] font-bold tracking-[0.3em] uppercase" style={{ color: "var(--color-theme-accent)" }}>
+                Boutique Officielle
+              </span>
+            </div>
+            <h1 className="font-sans text-4xl sm:text-6xl font-black uppercase tracking-tighter"
+              style={{ color: "var(--color-theme-fg)" }}>
+              La Boutique<br />
+              <span style={{ color: "var(--color-theme-accent)" }}>Caroana Minceur</span>
+            </h1>
+            <p className="text-xs max-w-xl leading-relaxed mt-3" style={{ color: "var(--color-theme-muted)" }}>
+              Produits individuels, packs synergiques et promotions — Toutes nos formules sont issues de plantes africaines sélectionnées à la source.
+            </p>
+          </ScrollReveal>
+
+          {/* Search bar */}
+          <ScrollReveal animation="fade-up" delay={100}>
+            <div className="relative max-w-md">
               <input
                 type="text"
-                placeholder="Ex: Gélules, Moringa..."
+                placeholder="Rechercher un produit ou un pack..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-theme-fg/5 pl-10 pr-4 py-3 border border-theme-border text-xs text-theme-fg placeholder:text-theme-fg/30 focus:outline-none focus:border-theme-accent transition-smooth"
+                className="w-full pl-4 pr-10 py-3 border rounded-lg text-sm focus:outline-none transition-all"
+                style={{
+                  background: "var(--color-theme-card)",
+                  borderColor: "var(--color-theme-border)",
+                  color: "var(--color-theme-fg)",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--color-theme-accent)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--color-theme-border)")}
               />
             </div>
-          </div>
+          </ScrollReveal>
 
-          {/* Categories Tab Selector */}
-          <div className="space-y-3">
-            <label className="text-[8px] font-bold tracking-widest uppercase text-theme-fg/50 block">Catégorie cible</label>
-            <div className="flex flex-col space-y-2">
-              {[
-                { label: "Tous les rituels", val: "all" },
-                { label: "Gélules concentrées", val: "capsules" },
-                { label: "Thés détox premium", val: "tea" },
-                { label: "Tisanes ancestrales", val: "herbal_tea" },
-              ].map((tab) => (
+          {/* Category tabs */}
+          <ScrollReveal animation="fade-up" delay={150}>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => (
                 <button
-                  key={tab.val}
-                  onClick={() => setSelectedType(tab.val)}
-                  className={`w-full text-left text-[10px] font-bold uppercase tracking-widest p-3 transition-smooth border border-theme-border/50 hover:bg-theme-fg/5 cursor-pointer ${
-                    selectedType === tab.val
-                      ? "text-theme-accent bg-theme-fg/5 border-theme-accent/20"
-                      : "text-theme-fg/70"
-                  }`}
+                  key={cat.val}
+                  onClick={() => setActiveTab(cat.val)}
+                  className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded border transition-all duration-300 cursor-pointer"
+                  style={{
+                    background: activeTab === cat.val ? "var(--color-theme-accent)" : "transparent",
+                    color: activeTab === cat.val ? "var(--color-theme-bg)" : "var(--color-theme-muted)",
+                    borderColor: activeTab === cat.val ? "var(--color-theme-accent)" : "var(--color-theme-border)",
+                  }}
                 >
-                  {tab.label}
+                  {cat.label}
                 </button>
               ))}
             </div>
-          </div>
+          </ScrollReveal>
+        </div>
+      </div>
 
-          {/* Sort selection */}
-          <div className="space-y-3">
-            <label className="text-[8px] font-bold tracking-widest uppercase text-theme-fg/50 block">Trier les fiches</label>
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full bg-theme-fg/5 border border-theme-border text-theme-fg text-xs p-3 focus:outline-none"
-              >
-                <option value="recent" className="bg-theme-bg">Le plus récent</option>
-                <option value="price-asc" className="bg-theme-bg">Prix croissant</option>
-                <option value="price-desc" className="bg-theme-bg">Prix décroissant</option>
-                <option value="alpha" className="bg-theme-bg">Ordre alphabétique</option>
-              </select>
-            </div>
-          </div>
-        </aside>
+      <div className="max-w-7xl mx-auto px-6 py-16 space-y-24">
 
-        {/* ================== RIGHT CATALOG DISPLAY (Col 9) ================== */}
-        <main className="col-span-12 md:col-span-9 flex flex-col items-stretch">
-          
-          {/* Page Banner Title */}
-          <div className="grid-cell p-8 sm:p-12 border-l-0 border-t-0 flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-theme-border">
-            <div>
-              <div className="inline-flex items-center space-x-1.5 text-[9px] font-bold text-theme-accent uppercase bg-theme-accent/5 border border-theme-accent/10 px-2 py-0.5 rounded-full mb-3">
-                <Sparkles className="w-2.5 h-2.5" />
-                <span>Boutique Officielle</span>
+        {/* ====== PRODUITS INDIVIDUELS ====== */}
+        {showSolo && filteredProduits.length > 0 && (
+          <section className="space-y-10">
+            <ScrollReveal animation="fade-up">
+              <div className="flex items-center gap-4">
+                <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
+                  <h2 className="text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--color-theme-accent)" }}>
+                    Produits Individuels
+                  </h2>
+                </div>
+                <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
               </div>
-              <h1 className="font-sans text-4xl sm:text-5xl font-black uppercase text-theme-fg tracking-tighter">La Boutique Caroana</h1>
-              <p className="text-xs text-theme-fg/60 mt-1 max-w-xl leading-relaxed">
-                Explorez notre sélection de préparations de phytothérapie traditionnelle. Toutes nos recettes sont élaborées avec le plus grand soin.
-              </p>
-            </div>
-            
-            <div className="text-right">
-              <span className="text-[8px] font-bold uppercase tracking-widest text-theme-fg/30 block">Résultats</span>
-              <span className="text-xl font-black text-theme-accent-hover">{filteredProducts.length} Produits</span>
-            </div>
-          </div>
+            </ScrollReveal>
 
-          {/* Loading / Grid Display */}
-          {loading ? (
-            <div className="flex-grow flex items-center justify-center py-40">
-              <div className="w-10 h-10 border-4 border-theme-accent border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            /* Empty State */
-            <div className="flex-grow text-center py-40 p-8">
-              <SlidersHorizontal className="w-12 h-12 text-theme-fg/20 mx-auto mb-4" />
-              <h3 className="font-serif text-lg font-bold text-theme-fg uppercase">Aucun produit trouvé</h3>
-              <p className="text-xs text-theme-fg/50 mt-1 max-w-xs mx-auto leading-relaxed">
-                Ajustez vos critères de recherche ou sélectionnez une autre catégorie pour explorer notre catalogue.
-              </p>
-            </div>
-          ) : (
-            /* Products grid with Lando-style Tile layouts */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-blueprint border-t-0 border-l-0 border-r-0 border-b-0">
-              {filteredProducts.map((p, idx) => {
-                const hasPrice = p.price !== null && p.price > 0;
-                return (
-                  <div
-                    key={p.id}
-                    className="grid-cell p-0 flex flex-col justify-between min-h-[52vh] hover-gold-sheen group transition-all duration-500 hover:bg-theme-fg/[0.01]"
-                  >
-                    <ScrollReveal
-                      animation="fade-up"
-                      delay={(idx % 3) * 120}
-                      className="p-8 h-full w-full flex flex-col justify-between flex-grow"
+            {/* Gélules Kaylie + Skinny — Highlight */}
+            {(activeTab === "all" || activeTab === "solo" || activeTab === "capsules") && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                {[PRODUITS[1]!, PRODUITS[2]!].map((p, idx) => (
+                  <ScrollReveal key={p.id} animation="fade-up" delay={idx * 100}>
+                    <div
+                      className="relative rounded-xl p-6 border hover-gold-sheen glow-on-hover transition-all duration-500 overflow-hidden"
+                      style={{
+                        background: `linear-gradient(135deg, rgba(var(--color-theme-accent-rgb), 0.06) 0%, var(--color-theme-card) 100%)`,
+                        borderColor: "rgba(var(--color-theme-accent-rgb), 0.3)",
+                      }}
                     >
-                      {/* Card Photo Frame */}
-                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-theme-bg border border-theme-border rounded-lg mb-6 shadow-2xl">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.images[0]?.url || ""}
-                          alt={p.name}
-                          className="object-cover w-full h-full group-hover:scale-[1.03] transition-smooth opacity-90 group-hover:opacity-100"
-                        />
-                        <button className="absolute top-3 right-3 p-2 rounded bg-theme-bg/80 hover:bg-theme-bg text-theme-fg/60 hover:text-theme-accent border border-theme-border transition-smooth cursor-pointer">
-                          <Heart className="w-3.5 h-3.5" />
+                      {/* Badge */}
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-lg">{p.icon}</span>
+                        <span
+                          className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
+                          style={{ background: "var(--color-theme-accent)", color: "var(--color-theme-bg)" }}
+                        >
+                          {p.badge}
+                        </span>
+                      </div>
+
+                      <h3 className="font-serif text-xl font-black mb-1" style={{ color: "var(--color-theme-fg)" }}>{p.name}</h3>
+                      <p className="text-[11px] mb-2" style={{ color: "var(--color-theme-muted)" }}>{p.shortDescription}</p>
+                      {p.detail && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold mb-4" style={{ color: "var(--color-theme-accent)" }}>
+                          <Clock className="w-3 h-3" />
+                          <span>{p.detail}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t"
+                        style={{ borderColor: "var(--color-theme-border)" }}>
+                        <span className="text-2xl font-black font-mono" style={{ color: "var(--color-theme-accent)", textShadow: "0 0 15px rgba(var(--color-theme-accent-rgb), 0.4)" }}>
+                          {p.price.toLocaleString("fr-FR")} F
+                        </span>
+                        <a
+                          href={getWhatsAppLink(p.name, p.price)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-4 py-2 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
+                          style={{ background: "#25D366", color: "#fff" }}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          Commander
+                        </a>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+            )}
+
+            {/* Autres produits */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProduits.filter(p => p.id !== "p-kaylie" && p.id !== "p-skinny").map((p, idx) => (
+                <ScrollReveal key={p.id} animation="fade-up" delay={(idx % 4) * 80}>
+                  <div
+                    className="relative rounded-xl p-5 border flex flex-col gap-4 hover-gold-sheen glow-on-hover transition-all duration-500"
+                    style={{
+                      background: "var(--color-theme-card)",
+                      borderColor: "var(--color-theme-border)",
+                    }}
+                  >
+                    <div className="aspect-video rounded-lg overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-smooth" />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span>{p.icon}</span>
+                        <h3 className="font-serif font-bold text-sm" style={{ color: "var(--color-theme-fg)" }}>{p.name}</h3>
+                      </div>
+                      <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-theme-muted)" }}>{p.shortDescription}</p>
+                    </div>
+
+                    <div className="mt-auto pt-3 border-t flex items-center justify-between gap-2"
+                      style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-base font-black font-mono" style={{ color: "var(--color-theme-accent)" }}>
+                        {p.price.toLocaleString("fr-FR")} F
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => addItem({ productId: p.id, variantId: null, sku: p.sku, name: p.name, price: p.price, imageUrl: p.image })}
+                          className="p-2 border rounded transition-all cursor-pointer"
+                          style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}
+                          title="Ajouter au panier"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
                         </button>
-                        {p.stock <= 0 && (
-                          <span className="absolute top-3 left-3 text-[8px] font-bold uppercase tracking-widest bg-danger text-white px-2.5 py-0.5 rounded">
-                            Rupture
+                        <a
+                          href={getWhatsAppLink(p.name, p.price)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="p-2 rounded transition-all cursor-pointer"
+                          style={{ background: "#25D366", color: "#fff" }}
+                          title="Commander WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ====== PROMOTION SPECIALE ====== */}
+        {(activeTab === "all" || activeTab === "packs") && (
+          <section className="space-y-8">
+            <ScrollReveal animation="scale-up">
+              <div
+                className="relative rounded-2xl p-8 sm:p-12 overflow-hidden border"
+                style={{
+                  background: "linear-gradient(135deg, rgba(var(--color-theme-accent-rgb), 0.1) 0%, var(--color-theme-card) 60%)",
+                  borderColor: "rgba(var(--color-theme-accent-rgb), 0.35)",
+                }}
+              >
+                {/* Glow orb */}
+                <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+                  style={{ background: "radial-gradient(circle, rgba(var(--color-theme-accent-rgb), 0.15) 0%, transparent 70%)", filter: "blur(40px)" }} />
+
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
+                      <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: "var(--color-theme-accent)" }}>
+                        Promotion Exclusive
+                      </span>
+                    </div>
+                    <h2 className="font-sans text-2xl sm:text-4xl font-black uppercase tracking-tight" style={{ color: "var(--color-theme-fg)" }}>
+                      Tisane & Thé Détox<br />
+                      <span style={{ color: "var(--color-theme-accent)" }}>3 paquets à 10 000 F</span>
+                    </h2>
+                    <p className="text-sm" style={{ color: "var(--color-theme-muted)" }}>
+                      Au lieu de <s>15 000 F CFA</s> — Économisez <strong style={{ color: "var(--color-theme-accent)" }}>5 000 F CFA</strong>
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] font-bold" style={{ color: "var(--color-theme-accent)" }}>
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Offre limitée · Stock disponible</span>
+                    </div>
+                  </div>
+                  <a
+                    href={getWhatsAppLink("Promotion Tisane + Thé Détox (3 paquets)", 10000)}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-lg font-black text-sm uppercase tracking-widest transition-all btn-accent flex-shrink-0"
+                  >
+                    <span>Profiter de l&apos;offre</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </ScrollReveal>
+          </section>
+        )}
+
+        {/* ====== PACKS & DUOS ====== */}
+        {showPacks && filteredPacks.length > 0 && (
+          <section className="space-y-10">
+            <ScrollReveal animation="fade-up">
+              <div className="flex items-center gap-4">
+                <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
+                  <h2 className="text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--color-theme-accent)" }}>
+                    Packs & Synergies
+                  </h2>
+                </div>
+                <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
+              </div>
+            </ScrollReveal>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredPacks.map((pack, idx) => (
+                <ScrollReveal key={pack.id} animation="fade-up" delay={(idx % 3) * 100}>
+                  <div
+                    className={`relative rounded-xl p-6 border flex flex-col gap-4 hover-gold-sheen transition-all duration-500 overflow-hidden ${pack.featured ? "glow-on-hover" : ""}`}
+                    style={{
+                      background: pack.featured
+                        ? `linear-gradient(135deg, rgba(var(--color-theme-accent-rgb), 0.08) 0%, var(--color-theme-card) 100%)`
+                        : "var(--color-theme-card)",
+                      borderColor: pack.featured ? "rgba(var(--color-theme-accent-rgb), 0.3)" : "var(--color-theme-border)",
+                    }}
+                  >
+                    {pack.featured && (
+                      <div
+                        className="absolute top-3 right-3 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
+                        style={{ background: "var(--color-theme-accent)", color: "var(--color-theme-bg)" }}
+                      >
+                        ⭐ Populaire
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{pack.icon}</span>
+                      <div>
+                        <h3 className="font-serif font-black text-sm leading-tight" style={{ color: "var(--color-theme-fg)" }}>{pack.name}</h3>
+                        <p className="text-[10px] mt-0.5" style={{ color: "var(--color-theme-muted)" }}>{pack.shortDescription}</p>
+                      </div>
+                    </div>
+
+                    {/* Items list */}
+                    <ul className="space-y-1.5">
+                      {pack.items.map((item, i) => (
+                        <li key={i} className="flex items-center gap-2 text-[10px]" style={{ color: "var(--color-theme-muted)" }}>
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--color-theme-accent)" }} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Price */}
+                    <div className="mt-auto pt-4 border-t space-y-3" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-black font-mono" style={{ color: "var(--color-theme-accent)" }}>
+                          {pack.price.toLocaleString("fr-FR")} F CFA
+                        </span>
+                        {pack.saving > 0 && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(var(--color-theme-accent-rgb), 0.15)", color: "var(--color-theme-accent)" }}>
+                            −{pack.saving.toLocaleString("fr-FR")} F économisés
                           </span>
                         )}
                       </div>
 
-                      {/* Meta Title */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-serif text-base sm:text-lg font-bold text-theme-fg group-hover:text-theme-accent transition-smooth">
-                            <Link href={`/produit/${p.slug}`}>
-                              {p.name}
-                            </Link>
-                          </h3>
-                          <span className="text-xs font-bold text-theme-accent-hover whitespace-nowrap">{formatPrice(p.price)}</span>
-                        </div>
-                        <p className="text-[11px] text-theme-fg/60 leading-normal line-clamp-2">
-                          {p.shortDescription}
-                        </p>
-                      </div>
-
-                      {/* Actions Panel */}
-                      <div className="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-theme-border/50">
-                        {hasPrice && p.stock > 0 ? (
-                          <button
-                            onClick={() =>
-                              addItem({
-                                productId: p.id,
-                                variantId: null,
-                                sku: p.sku,
-                                name: p.name,
-                                price: p.price!,
-                                imageUrl: p.images[0]?.url || "",
-                              })
-                            }
-                            className="flex items-center justify-center space-x-1 py-2.5 border border-theme-border hover:border-theme-accent hover:bg-theme-fg/5 text-theme-fg text-[10px] font-bold uppercase tracking-widest transition-smooth cursor-pointer"
-                          >
-                            <ShoppingCart className="w-3.5 h-3.5" />
-                            <span>Panier</span>
-                          </button>
-                        ) : (
-                          <button
-                            disabled
-                            className="flex items-center justify-center space-x-1 py-2.5 border border-theme-border/50 bg-theme-fg/5 text-theme-fg/20 text-[10px] font-semibold uppercase tracking-widest cursor-not-allowed"
-                          >
-                            <ShoppingCart className="w-3.5 h-3.5" />
-                            <span>Panier</span>
-                          </button>
-                        )}
-
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => addItem({
+                            productId: pack.id, variantId: null,
+                            sku: pack.id.toUpperCase(), name: pack.name,
+                            price: pack.price, imageUrl: pack.image
+                          })}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                          style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          Panier
+                        </button>
                         <a
-                          href={getWhatsAppLink(p.name)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center space-x-1 py-2.5 bg-[#25D366] hover:bg-[#20ba56] text-white text-[10px] font-bold uppercase tracking-widest transition-smooth shadow-md cursor-pointer"
+                          href={getWhatsAppLink(pack.name, pack.price)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
+                          style={{ background: "#25D366", color: "#fff" }}
                         >
                           <MessageCircle className="w-3.5 h-3.5" />
-                          <span>WhatsApp</span>
+                          WhatsApp
                         </a>
                       </div>
-                    </ScrollReveal>
+                    </div>
                   </div>
-                );
-              })}
+                </ScrollReveal>
+              ))}
             </div>
-          )}
-        </main>
+          </section>
+        )}
+
+        {/* ====== LIVRAISON INFO ====== */}
+        <ScrollReveal animation="scale-up">
+          <div
+            className="rounded-xl p-8 border"
+            style={{ background: "var(--color-theme-card)", borderColor: "var(--color-theme-border)" }}
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-lg">🚚</span>
+              <h3 className="font-sans font-black text-sm uppercase tracking-widest" style={{ color: "var(--color-theme-fg)" }}>
+                Frais de Livraison
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {LIVRAISON.map((z) => (
+                <div
+                  key={z.zone}
+                  className="flex items-center justify-between p-4 rounded-lg border"
+                  style={{ borderColor: "var(--color-theme-border)", background: "var(--color-theme-surface, rgba(var(--color-theme-accent-rgb), 0.02))" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{z.icon}</span>
+                    <span className="text-xs font-bold" style={{ color: "var(--color-theme-fg)" }}>{z.zone}</span>
+                  </div>
+                  <span className="text-sm font-black font-mono" style={{ color: "var(--color-theme-accent)" }}>{z.tarif}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] mt-4 text-center" style={{ color: "var(--color-theme-muted)" }}>
+              Paiement à la livraison disponible · WhatsApp :{" "}
+              <a href="https://wa.me/2250143655088" className="font-bold" style={{ color: "var(--color-theme-accent)" }}>
+                +225 01 43 65 50 88
+              </a>
+            </p>
+          </div>
+        </ScrollReveal>
 
       </div>
     </div>

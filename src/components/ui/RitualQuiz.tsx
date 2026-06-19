@@ -40,33 +40,66 @@ const PRODUCTS_DB = {
     slug: "gelules-ventre-plat",
     sku: "GVP-01",
     name: "Gélules Ventre Plat",
+    price: 10000,
+    imageUrl: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    desc: "Idéal pour éliminer la rétention d’eau et cibler la sangle abdominale de manière pratique.",
+    benefits: ["Action ventre plat ciblée", "Brûleur de graisses naturel", "Format capsule pratique"],
+    season: "Cure 2026"
+  },
+  gelules_kaylie: {
+    id: "p-kaylie",
+    slug: "gelules-kaylie",
+    sku: "GK-01",
+    name: "Gélules Minceur Kaylie",
+    price: 25000,
+    imageUrl: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    desc: "Cure d’un mois. Perte de 9 kg à plus. La formule premium pour une transformation silhouette profonde.",
+    benefits: ["Cure 1 mois complète", "Perte 9 kg à plus", "Formule concentrée premium"],
+    season: "Cure 2026"
+  },
+  gelules_skinny: {
+    id: "p-skinny",
+    slug: "gelules-skinny",
+    sku: "GS-01",
+    name: "Gélules Minceur Skinny",
     price: 15000,
     imageUrl: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
-    desc: "Idéal pour éliminer la rétention d'eau et cibler la sangle abdominale de manière pratique.",
-    benefits: ["Action ventre plat ciblée", "Brûleur de graisses naturel", "Format capsule pratique"],
-    season: "Saison 2026"
+    desc: "Cure d’une semaine. Perte de 1 kg à 9 kg. Efficacité rapide pour des résultats visibles rapidement.",
+    benefits: ["Cure 1 semaine", "Perte 1 à 9 kg", "Résultats rapides visibles"],
+    season: "Cure 2026"
   },
   the: {
     id: "p2",
     slug: "the-detox",
     sku: "TD-01",
-    name: "Thé Détox Premium",
-    price: 8000,
+    name: "Thé Détox",
+    price: 5000,
     imageUrl: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
-    desc: "Le meilleur choix pour purifier l'organisme des métaux lourds et des excès.",
-    benefits: ["Élimination des toxines", "Effet draineur puissant", "Kinkeliba & Citronnelle"],
-    season: "Saison 2026"
+    desc: "Le meilleur choix pour purifier l’organisme des métaux lourds et des excès. Kinkéliba & Citronnelle.",
+    benefits: ["Élimination des toxines", "Effet draineur puissant", "Kinkéliba & Citronnelle"],
+    season: "Cure 2026"
   },
   tisane: {
     id: "p3",
     slug: "tisane-ventre-plat",
     sku: "TVP-01",
     name: "Tisane Ventre Plat",
-    price: 10000,
+    price: 5000,
     imageUrl: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
     desc: "Infusion ancestrale favorisant une digestion légère et éliminant naturellement les ballonnements.",
     benefits: ["Confort intestinal optimal", "Sensation de légèreté", "Plantes sauvages récoltées main"],
-    season: "Saison 2026"
+    season: "Cure 2026"
+  },
+  tisane_minceur: {
+    id: "p-tisane-m",
+    slug: "tisane-minceur",
+    sku: "TM-01",
+    name: "Tisane Minceur",
+    price: 8000,
+    imageUrl: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+    desc: "Formule de phytothérapie africaine pour affiner la silhouette et favoriser l’élimination.",
+    benefits: ["Affinage silhouette", "Drainage naturel", "Plantes ancestrales"],
+    season: "Cure 2026"
   }
 };
 
