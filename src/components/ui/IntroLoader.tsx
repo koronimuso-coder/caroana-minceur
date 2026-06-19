@@ -1,15 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Terminal } from "lucide-react";
+import { Leaf } from "lucide-react";
+
+// Particles flottantes
+const PARTICLES = [
+  { x: "15%", y: "20%", delay: "0s", dur: "8s", size: 3 },
+  { x: "80%", y: "15%", delay: "1.5s", dur: "11s", size: 2 },
+  { x: "45%", y: "70%", delay: "3s", dur: "9s", size: 4 },
+  { x: "70%", y: "55%", delay: "0.5s", dur: "13s", size: 2 },
+  { x: "25%", y: "80%", delay: "2s", dur: "10s", size: 3 },
+  { x: "90%", y: "40%", delay: "4s", dur: "7s", size: 2 },
+  { x: "10%", y: "60%", delay: "1s", dur: "12s", size: 3 },
+  { x: "60%", y: "25%", delay: "2.5s", dur: "8s", size: 2 },
+];
 
 export default function IntroLoader() {
   const [progress, setProgress] = useState(0);
   const [isDone, setIsDone] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const [phase, setPhase] = useState<"loading" | "complete">("loading");
 
   useEffect(() => {
-    // Check sessionStorage to only play once per session
     const hasLoaded = sessionStorage.getItem("caroana-site-loaded");
     if (hasLoaded) {
       setShouldRender(false);
@@ -19,21 +31,22 @@ export default function IntroLoader() {
     setShouldRender(true);
     document.body.classList.add("loader-active");
 
-    // Dynamic digital counting progress
     let start = 0;
     const interval = setInterval(() => {
-      start += Math.floor(Math.random() * 8) + 2; // random step
+      const step = Math.floor(Math.random() * 7) + 3;
+      start = Math.min(start + step, 100);
+      setProgress(start);
+
       if (start >= 100) {
-        start = 100;
         clearInterval(interval);
+        setPhase("complete");
         setTimeout(() => {
           setIsDone(true);
           document.body.classList.remove("loader-active");
           sessionStorage.setItem("caroana-site-loaded", "true");
-        }, 600); // delay to enjoy the 100% state
+        }, 900);
       }
-      setProgress(start);
-    }, 60);
+    }, 55);
 
     return () => {
       clearInterval(interval);
@@ -43,71 +56,261 @@ export default function IntroLoader() {
 
   if (!shouldRender) return null;
 
+  const svgOffset = 500 - (progress / 100) * 500;
+
   return (
-    <div 
-      className={`fixed inset-0 z-99999 flex flex-col items-center justify-center bg-theme-bg select-none transition-all duration-[1000ms] cubic-bezier(0.85, 0, 0.15, 1) ${
-        isDone ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-      }`}
+    <div
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center overflow-hidden
+        transition-all duration-[1100ms] ease-[cubic-bezier(0.85,0,0.15,1)]
+        ${isDone ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"}`}
+      style={{ background: "var(--color-theme-bg)" }}
     >
-      {/* Background blueprint grid dots */}
-      <div className="absolute inset-0 pattern-mesh opacity-20 pointer-events-none" />
-      <div className="absolute inset-0 pattern-contour opacity-10 pointer-events-none" />
+      {/* === AMBIENT GLOW ORBS === */}
+      <div
+        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(var(--color-theme-accent-rgb), 0.12) 0%, transparent 70%)",
+          filter: "blur(60px)",
+          animation: "pulse-glow 4s ease-in-out infinite",
+        }}
+      />
+      <div
+        className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(var(--color-theme-accent-rgb), 0.08) 0%, transparent 70%)",
+          filter: "blur(80px)",
+          animation: "pulse-glow 6s ease-in-out infinite reverse",
+        }}
+      />
 
-      {/* Cyber target HUD details */}
-      <div className="absolute top-10 left-10 text-[8px] font-mono text-theme-fg/40 space-y-1 hidden sm:block">
-        <p className="flex items-center gap-1.5">
-          <Terminal className="w-3 h-3 text-theme-accent" />
-          <span>SYSTEM: INITIALIZING</span>
-        </p>
-        <p>COORDS: 5.3096° N, 4.0127° W</p>
-        <p>SYS.LOCK: ACTIVE</p>
+      {/* === MESH GRID BACKGROUND === */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(var(--color-theme-accent-rgb), 0.18) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+          opacity: 0.4,
+        }}
+      />
+
+      {/* === PARTICLES FLOTTANTES === */}
+      {PARTICLES.map((p, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            left: p.x,
+            top: p.y,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            background: "var(--color-theme-accent)",
+            opacity: 0.6,
+            animationName: "particle-drift",
+            animationDuration: p.dur,
+            animationDelay: p.delay,
+            animationTimingFunction: "ease-in-out",
+            animationIterationCount: "infinite",
+          }}
+        />
+      ))}
+
+      {/* === HUD CORNER INFO === */}
+      <div className="absolute top-8 left-8 text-[8px] font-mono space-y-1 hidden sm:block"
+        style={{ color: "var(--color-theme-muted)" }}>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-current" style={{ animation: "ping-soft 2s infinite", background: "var(--color-theme-accent)" }} />
+          <span>SYSTÈME INITIALISÉ</span>
+        </div>
+        <div>LAT: 5.3096°N  LON: 4.0127°W</div>
+        <div>ABIDJAN, CÔTE D'IVOIRE</div>
       </div>
 
-      <div className="absolute bottom-10 right-10 text-[8px] font-mono text-theme-fg/40 hidden sm:block">
-        <p>CAROANA MINCEUR v2.0</p>
-        <p>AESTHETICS: OFF+BRAND LANDO</p>
+      <div className="absolute top-8 right-8 text-[8px] font-mono text-right hidden sm:block"
+        style={{ color: "var(--color-theme-muted)" }}>
+        <div>CAROANA MINCEUR v2.0</div>
+        <div>RITUELS BOTANIQUES</div>
+        <div className="mt-1" style={{ color: "var(--color-theme-accent)" }}>PHYTOTHÉRAPIE AFRICAINE</div>
       </div>
 
-      {/* Centerpiece SVG Draw & Counter */}
-      <div className="relative flex flex-col items-center max-w-sm w-full px-6 space-y-12">
-        
-        {/* Pulsing Accent Glow */}
-        <div className="absolute -top-12 w-48 h-48 rounded-full bg-theme-accent/5 filter blur-3xl animate-pulse" />
+      <div className="absolute bottom-8 left-8 text-[8px] font-mono hidden sm:block"
+        style={{ color: "var(--color-theme-muted)" }}>
+        <div>FORMULES:{" "}<span style={{ color: "var(--color-theme-accent)" }}>ACTIVES</span></div>
+        <div>INGRÉDIENTS:{" "}<span style={{ color: "var(--color-theme-accent)" }}>100% NATURELS</span></div>
+      </div>
 
-        {/* Logo and SVG Path Drawing */}
-        <div className="w-full flex flex-col items-center">
-          <svg viewBox="0 0 100 100" className="w-32 h-auto text-theme-accent fill-none stroke-[2] stroke-current">
-            <path 
-              d="M 25,10 C 42,30 42,70 25,90 M 75,10 C 58,30 58,70 75,90 M 50,20 C 35,35 35,65 50,80 C 65,65 65,35 50,20 M 50,20 L 50,85 M 50,40 Q 42,35 38,38 M 50,40 Q 58,35 62,38 M 50,55 Q 40,50 36,55 M 50,55 Q 60,50 64,55" 
-              strokeDasharray="500" 
-              strokeDashoffset={500 - (progress / 100) * 500}
-              className="transition-all duration-300 ease-out"
+      <div className="absolute bottom-8 right-8 text-[8px] font-mono text-right hidden sm:block"
+        style={{ color: "var(--color-theme-muted)" }}>
+        <div>KINKÉLIBA · CITRONNELLE</div>
+        <div>THÉ VERT · GINGEMBRE</div>
+      </div>
+
+      {/* === CENTERPIECE === */}
+      <div className="relative flex flex-col items-center w-full max-w-sm px-8 space-y-10">
+
+        {/* Leaf + Waist SVG Logo — draws on progress */}
+        <div className="relative flex items-center justify-center">
+          {/* Animated ring */}
+          <div
+            className="absolute w-44 h-44 rounded-full"
+            style={{
+              border: "1px solid rgba(var(--color-theme-accent-rgb), 0.2)",
+              animation: "spin-slow 20s linear infinite",
+            }}
+          />
+          <div
+            className="absolute w-36 h-36 rounded-full"
+            style={{
+              border: "1px dashed rgba(var(--color-theme-accent-rgb), 0.12)",
+              animation: "spin-slow 15s linear infinite reverse",
+            }}
+          />
+
+          {/* SVG Drawing animation */}
+          <svg
+            viewBox="0 0 100 100"
+            className="w-28 h-28 relative z-10"
+            fill="none"
+            style={{ stroke: "var(--color-theme-accent)", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }}
+          >
+            {/* Silhouette taille — courbes féminines stylisées */}
+            <path
+              d="M 34,8 C 50,20 52,35 44,50 C 38,62 38,72 42,90"
+              strokeDasharray="500"
+              strokeDashoffset={svgOffset}
+              style={{ transition: "stroke-dashoffset 0.15s ease-out" }}
+            />
+            <path
+              d="M 66,8 C 50,20 48,35 56,50 C 62,62 62,72 58,90"
+              strokeDasharray="500"
+              strokeDashoffset={svgOffset * 0.95}
+              style={{ transition: "stroke-dashoffset 0.15s ease-out", opacity: 0.8 }}
+            />
+            {/* Ceinture centrale */}
+            <path
+              d="M 34,52 Q 50,46 66,52"
+              strokeDasharray="80"
+              strokeDashoffset={Math.max(0, 80 - (progress / 100) * 80 * 1.8)}
+              style={{ transition: "stroke-dashoffset 0.15s ease-out", opacity: 0.7 }}
+            />
+            {/* Feuille botanique centrale */}
+            <path
+              d="M 50,20 C 38,32 38,48 50,58 C 62,48 62,32 50,20 Z"
+              strokeDasharray="120"
+              strokeDashoffset={Math.max(0, 120 - (progress / 100) * 120 * 1.6)}
+              style={{ transition: "stroke-dashoffset 0.15s ease-out", opacity: 0.6 }}
+            />
+            {/* Nervure centrale de la feuille */}
+            <path
+              d="M 50,22 L 50,56"
+              strokeDasharray="40"
+              strokeDashoffset={Math.max(0, 40 - (progress / 100) * 40 * 2)}
+              style={{ transition: "stroke-dashoffset 0.15s ease-out", opacity: 0.4 }}
             />
           </svg>
-          
-          <h2 className="font-serif text-lg font-bold tracking-[0.2em] text-theme-fg mt-4 text-center">
-            CAROANA <span className="text-[10px] tracking-[0.25em] font-sans font-bold text-theme-accent uppercase block -mt-1.5">Minceur</span>
-          </h2>
+
+          {/* Glow at center */}
+          <div
+            className="absolute w-16 h-16 rounded-full pointer-events-none"
+            style={{
+              background: `radial-gradient(circle, rgba(var(--color-theme-accent-rgb), ${phase === "complete" ? 0.3 : 0.1}) 0%, transparent 70%)`,
+              filter: "blur(12px)",
+              transition: "all 0.5s ease",
+            }}
+          />
         </div>
 
-        {/* HUD calibration counter */}
-        <div className="w-full flex flex-col items-center space-y-3">
-          <div className="w-full h-[1px] bg-theme-border relative">
-            <div 
-              className="h-full bg-theme-accent transition-all duration-300 ease-out absolute left-0 top-0"
-              style={{ width: `${progress}%` }}
+        {/* Brand Name */}
+        <div className="text-center space-y-1">
+          <h1
+            className="font-serif text-2xl font-bold tracking-[0.25em]"
+            style={{ color: "var(--color-theme-fg)" }}
+          >
+            CAROANA
+          </h1>
+          <div
+            className="flex items-center gap-2 justify-center"
+          >
+            <div className="h-px w-8" style={{ background: "var(--color-theme-accent)" }} />
+            <span
+              className="text-[10px] font-black tracking-[0.4em] uppercase"
+              style={{ color: "var(--color-theme-accent)" }}
+            >
+              Minceur
+            </span>
+            <div className="h-px w-8" style={{ background: "var(--color-theme-accent)" }} />
+          </div>
+        </div>
+
+        {/* Progress bar + counter */}
+        <div className="w-full space-y-3">
+          {/* Progress track */}
+          <div
+            className="w-full h-[2px] rounded-full relative overflow-hidden"
+            style={{ background: "rgba(var(--color-theme-accent-rgb), 0.12)" }}
+          >
+            <div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{
+                width: `${progress}%`,
+                background: `linear-gradient(90deg, var(--color-theme-accent-dark), var(--color-theme-accent), var(--color-theme-accent-hover))`,
+                boxShadow: "0 0 8px rgba(var(--color-theme-accent-rgb), 0.7)",
+                transition: "width 0.3s ease-out",
+              }}
+            />
+            {/* Glowing tip */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
+              style={{
+                left: `calc(${progress}% - 4px)`,
+                background: "var(--color-theme-accent)",
+                boxShadow: "0 0 8px 3px rgba(var(--color-theme-accent-rgb), 0.8)",
+                transition: "left 0.3s ease-out",
+                display: progress > 0 && progress < 100 ? "block" : "none",
+              }}
             />
           </div>
 
-          <div className="flex justify-between w-full text-[10px] font-mono font-bold text-theme-fg/60">
-            <span className="flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-theme-accent animate-spin-slow" style={{ animationDuration: "6s" }} />
-              CALIBRATION
+          {/* HUD row */}
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center gap-1.5">
+              <Leaf
+                className="w-3 h-3"
+                style={{
+                  color: "var(--color-theme-accent)",
+                  animation: "leaf-sway 6s ease-in-out infinite",
+                }}
+              />
+              <span
+                className="text-[9px] font-bold uppercase tracking-[0.2em]"
+                style={{ color: "var(--color-theme-muted)" }}
+              >
+                {phase === "complete" ? "Bienvenue ✦" : "Chargement"}
+              </span>
+            </div>
+            <span
+              className="text-[14px] font-black font-mono"
+              style={{
+                color: "var(--color-theme-accent)",
+                textShadow: "0 0 15px rgba(var(--color-theme-accent-rgb), 0.5)",
+              }}
+            >
+              {progress.toString().padStart(3, "0")}%
             </span>
-            <span className="text-theme-accent text-glow">{progress.toString().padStart(3, "0")}%</span>
           </div>
         </div>
 
+      </div>
+
+      {/* Bottom tagline */}
+      <div
+        className="absolute bottom-16 text-[9px] font-mono tracking-[0.3em] uppercase text-center"
+        style={{
+          color: "var(--color-theme-muted)",
+          opacity: progress > 60 ? 1 : 0,
+          transition: "opacity 0.8s ease",
+        }}
+      >
+        Rituels de Phytothérapie Africaine · Côte d'Ivoire
       </div>
     </div>
   );

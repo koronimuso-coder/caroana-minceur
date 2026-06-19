@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { useEffect, useRef, useState, ReactNode, CSSProperties } from "react";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -9,6 +9,7 @@ interface ScrollRevealProps {
   duration?: number; // in ms
   threshold?: number;
   className?: string;
+  style?: CSSProperties;
 }
 
 export default function ScrollReveal({
@@ -18,6 +19,7 @@ export default function ScrollReveal({
   duration = 800,
   threshold = 0.1,
   className = "",
+  style: externalStyle,
 }: ScrollRevealProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -75,16 +77,17 @@ export default function ScrollReveal({
     }
   };
 
-  const style = {
+  const animStyle = {
     ...getAnimationStyles(),
     transitionProperty: "opacity, transform",
     transitionDuration: `${duration}ms`,
     transitionDelay: `${delay}ms`,
     transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+    ...externalStyle,
   };
 
   return (
-    <div ref={elementRef} style={style} className={className}>
+    <div ref={elementRef} style={animStyle} className={className}>
       {children}
     </div>
   );
