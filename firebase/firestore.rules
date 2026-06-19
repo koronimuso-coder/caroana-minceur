@@ -1,0 +1,116 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return isSignedIn() ? getUserData().role : 'guest';
+    }
+
+    function isStaff() {
+      return isSignedIn() && getUserRole() in [
+        'support',
+        'content_editor',
+        'inventory_manager',
+        'order_manager',
+        'administrator',
+        'super_admin'
+      ];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserRole() in ['administrator', 'super_admin'];
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Do not allow normal users to change their own role or admin permissions
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'permissions'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 2. Products collection
+    match /products/{productId} {
+      // Anyone can read published products. Staff can read drafts.
+      allow read: if resource.data.status == 'published' || isStaff();
+      // Block publishing any products having a price of null
+      allow create, update: if isStaff() && (
+        request.resource.data.status != 'published' || 
+        (request.resource.data.price != null && request.resource.data.price > 0)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Product Variants collection
+    match /productVariants/{variantId} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // 3. Orders collection
+    match /orders/{orderId} {
+      // Users can read their own orders. Staff can read all.
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaff());
+      // Orders can only be created and updated via server-side logic (Admin SDK)
+      allow write: if false;
+    }
+
+    // Order events collection
+    match /orderEvents/{eventId} {
+      allow read: if isSignedIn() && (
+        get(/databases/$(database)/documents/orders/$(resource.data.orderId)).data.userId == request.auth.uid || 
+        isStaff()
+      );
+      allow write: if false;
+    }
+
+    // 4. Payments collection
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaff());
+      allow write: if false;
+    }
+
+    // 5. Inventory movements collection
+    match /inventoryMovements/{movementId} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
+    // 6. Audit logs collection
+    match /auditLogs/{logId} {
+      allow read: if isSignedIn() && getUserRole() == 'super_admin';
+      allow write: if false;
+    }
+
+    // 7. Coupons collection
+    match /coupons/{couponId} {
+      allow read: if isSignedIn() || isStaff();
+      allow write: if isAdmin() || hasRole('content_editor');
+    }
+
+    // 8. Shipping Zones collection
+    match /shippingZones/{zoneId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Helper to check specific role
+    function hasRole(role) {
+      return isSignedIn() && getUserRole() == role;
+    }
+  }
+}

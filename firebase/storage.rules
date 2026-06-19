@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isPdf() {
+      return request.resource.contentType == 'application/pdf';
+    }
+
+    function isLessThanSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+
+    // 1. User avatars
+    match /users/{userId}/avatar {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId && isImage() && isLessThanSize(5);
+    }
+
+    // 2. Proof of payments (Mobile Money / Bank Transfer receipt uploads)
+    match /payments/{orderId}/{filename} {
+      allow read: if isSignedIn(); // Add server-side check or staff check if needed
+      // Must be image or PDF, under 10MB
+      allow write: if (isImage() || isPdf()) && isLessThanSize(10);
+    }
+
+    // 3. Product images
+    match /products/{productId}/{filename} {
+      allow read: if true;
+      allow write: if isSignedIn(); // Restricted to staff on application level
+    }
+  }
+}
