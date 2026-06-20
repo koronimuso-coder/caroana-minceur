@@ -1,17 +1,24 @@
-import { adminDb, FieldValue } from "@/lib/firebase/admin";
+import { adminDb, FieldValue, isFirebaseConfigured } from "@/lib/firebase/admin";
 import { Product, ProductVariant } from "@/types";
+import { MOCK_PRODUCTS } from "../mockDb";
 
 export class ProductRepository {
   private productsCol = adminDb.collection("products");
   private variantsCol = adminDb.collection("productVariants");
 
   async getById(id: string): Promise<Product | null> {
+    if (!isFirebaseConfigured()) {
+      return MOCK_PRODUCTS.find((p) => p.id === id) || null;
+    }
     const doc = await this.productsCol.doc(id).get();
     if (!doc.exists) return null;
     return { id: doc.id, ...doc.data() } as Product;
   }
 
   async getBySlug(slug: string): Promise<Product | null> {
+    if (!isFirebaseConfigured()) {
+      return MOCK_PRODUCTS.find((p) => p.slug === slug) || null;
+    }
     const snapshot = await this.productsCol.where("slug", "==", slug).limit(1).get();
     if (snapshot.empty) return null;
     const doc = snapshot.docs[0];
@@ -20,6 +27,14 @@ export class ProductRepository {
   }
 
   async getAll(status?: "draft" | "published" | "archived"): Promise<Product[]> {
+    if (!isFirebaseConfigured()) {
+      const list = MOCK_PRODUCTS.filter((p) => !status || p.status === status);
+      return [...list].sort((a, b) => {
+        const aTime = new Date(a.createdAt as any).getTime();
+        const bTime = new Date(b.createdAt as any).getTime();
+        return bTime - aTime;
+      });
+    }
     let query: FirebaseFirestore.Query = this.productsCol;
     if (status) {
       query = query.where("status", "==", status);
@@ -39,6 +54,14 @@ export class ProductRepository {
   }
 
   async getByCategory(categoryId: string, status: "published" = "published"): Promise<Product[]> {
+    if (!isFirebaseConfigured()) {
+      const list = MOCK_PRODUCTS.filter((p) => p.categoryId === categoryId && p.status === status);
+      return [...list].sort((a, b) => {
+        const aTime = new Date(a.createdAt as any).getTime();
+        const bTime = new Date(b.createdAt as any).getTime();
+        return bTime - aTime;
+      });
+    }
     const snapshot = await this.productsCol
       .where("categoryId", "==", categoryId)
       .where("status", "==", status)
@@ -57,6 +80,9 @@ export class ProductRepository {
   }
 
   async getFeatured(limit = 4): Promise<Product[]> {
+    if (!isFirebaseConfigured()) {
+      return MOCK_PRODUCTS.filter((p) => p.featured && p.status === "published").slice(0, limit);
+    }
     const snapshot = await this.productsCol
       .where("featured", "==", true)
       .where("status", "==", "published")
@@ -95,6 +121,9 @@ export class ProductRepository {
   }
 
   async getVariants(productId: string): Promise<ProductVariant[]> {
+    if (!isFirebaseConfigured()) {
+      return [];
+    }
     const snapshot = await this.variantsCol.where("productId", "==", productId).get();
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as ProductVariant));
   }

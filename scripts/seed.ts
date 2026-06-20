@@ -1,71 +1,9 @@
 import "./load-env";
 import { adminDb } from "../src/lib/firebase/admin";
 
-const PRODUCTS = [
-  {
-    id: "gelules-ventre-plat",
-    name: "Gélules Ventre Plat",
-    slug: "gelules-ventre-plat",
-    description: "Complément alimentaire naturel formulé à base de plantes locales sélectionnées pour accompagner votre confort digestif et soutenir une sensation de légèreté au quotidien.",
-    price: null, // Set to null as requested; requires admin review to publish
-    compareAtPrice: null,
-    images: ["https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=800"],
-    status: "draft",
-    featured: true,
-    categoryId: "complements",
-    stock: 50,
-    trackInventory: true,
-    allowBackorder: false,
-    sku: "CM-GVP-01",
-    weight: 0.1, // kg
-    metadata: {
-      ingredients: ["Plantes locales ivoiriennes", "Fibres naturelles"],
-      dosage: "2 gélules par jour le matin avec un grand verre d'eau."
-    }
-  },
-  {
-    id: "the-detox",
-    name: "Thé Détox",
-    slug: "the-detox",
-    description: "Une infusion rafraîchissante et purifiante, alliance subtile de plantes traditionnelles africaines pour purifier l'organisme en douceur.",
-    price: null,
-    compareAtPrice: null,
-    images: ["https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=800"],
-    status: "draft",
-    featured: true,
-    categoryId: "infusions",
-    stock: 100,
-    trackInventory: true,
-    allowBackorder: false,
-    sku: "CM-TD-01",
-    weight: 0.15,
-    metadata: {
-      ingredients: ["Kinkeliba", "Citronnelle", "Gingembre"],
-      dosage: "1 sachet à infuser matin et soir après les repas."
-    }
-  },
-  {
-    id: "tisane-ventre-plat",
-    name: "Tisane Ventre Plat",
-    slug: "tisane-ventre-plat",
-    description: "Infusion douce favorisant le bien-être digestif et contribuant à atténuer les sensations de ballonnements de manière naturelle.",
-    price: null,
-    compareAtPrice: null,
-    images: ["https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800"],
-    status: "draft",
-    featured: false,
-    categoryId: "infusions",
-    stock: 80,
-    trackInventory: true,
-    allowBackorder: false,
-    sku: "CM-TVP-01",
-    weight: 0.15,
-    metadata: {
-      ingredients: ["Feuilles de séné", "Menthe poivrée", "Plantes bien-être"],
-      dosage: "1 tasse en infusion le soir au coucher."
-    }
-  }
-];
+import { MOCK_PRODUCTS } from "../src/server/mockDb";
+
+const PRODUCTS = MOCK_PRODUCTS;
 
 const SHIPPING_ZONES = [
   {

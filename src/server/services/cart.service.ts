@@ -1,44 +1,6 @@
-import { adminDb } from "@/lib/firebase/admin";
+import { adminDb, isFirebaseConfigured } from "@/lib/firebase/admin";
 import { Product, ProductVariant, Coupon, ShippingZone } from "@/types";
-
-const LOCAL_PRODUCTS: Record<string, { price: number; name: string; sku: string; stock: number }> = {
-  "gelules-ventre-plat": { price: 10000, name: "Gélules Ventre Plat", sku: "GVP-01", stock: 100 },
-  "p1": { price: 10000, name: "Gélules Ventre Plat", sku: "GVP-01", stock: 100 },
-  "gelules-kaylie": { price: 25000, name: "Gélules Minceur Kaylie", sku: "GK-01", stock: 50 },
-  "p-kaylie": { price: 25000, name: "Gélules Minceur Kaylie", sku: "GK-01", stock: 50 },
-  "gelules-skinny": { price: 15000, name: "Gélules Minceur Skinny", sku: "GS-01", stock: 80 },
-  "p-skinny": { price: 15000, name: "Gélules Minceur Skinny", sku: "GS-01", stock: 80 },
-  "the-detox": { price: 5000, name: "Thé Détox", sku: "TD-01", stock: 100 },
-  "p2": { price: 5000, name: "Thé Détox", sku: "TD-01", stock: 100 },
-  "tisane-ventre-plat": { price: 5000, name: "Tisane Ventre Plat", sku: "TVP-01", stock: 100 },
-  "p3": { price: 5000, name: "Tisane Ventre Plat", sku: "TVP-01", stock: 100 },
-  "tisane-minceur": { price: 8000, name: "Tisane Minceur", sku: "TM-01", stock: 100 },
-  "p-tisane-m": { price: 8000, name: "Tisane Minceur", sku: "TM-01", stock: 100 },
-  "produit-minceur": { price: 8000, name: "Produit Minceur", sku: "PM-01", stock: 60 },
-  "p-produit-m": { price: 8000, name: "Produit Minceur", sku: "PM-01", stock: 60 },
-  "p-gelules-nourrice": { price: 10000, name: "Gélules Ventre Plat Nourrice", sku: "GVPN-01", stock: 100 },
-  "gelules-ventre-plat-nourrice": { price: 10000, name: "Gélules Ventre Plat Nourrice", sku: "GVPN-01", stock: 100 },
-  "p-caolin-nourrice": { price: 5000, name: "Caolin Ventre Plat Nourrice", sku: "CVPN-01", stock: 100 },
-  "caolin-ventre-plat-nourrice": { price: 5000, name: "Caolin Ventre Plat Nourrice", sku: "CVPN-01", stock: 100 },
-  "p-tisane-nourrice": { price: 5000, name: "Tisane Ventre Plat Nourrice", sku: "TVPN-01", stock: 100 },
-  "tisane-ventre-plat-nourrice": { price: 5000, name: "Tisane Ventre Plat Nourrice", sku: "TVPN-01", stock: 100 },
-};
-
-const LOCAL_PACKS: Record<string, { price: number; name: string; sku: string }> = {
-  "pack-1": { price: 14000, name: "Pack Gélules Ventre Plat + Thé Détox", sku: "PK-01" },
-  "pack-2": { price: 14000, name: "Pack Gélules Ventre Plat + Tisane Ventre Plat", sku: "PK-02" },
-  "pack-3": { price: 10000, name: "Pack Thé Détox + Tisane Ventre Plat", sku: "PK-03" },
-  "pack-4": { price: 19000, name: "Pack Complet 3 Produits", sku: "PK-04" },
-  "pack-5": { price: 30000, name: "Pack Gélules Kaylie + Thé Détox", sku: "PK-05" },
-  "pack-6": { price: 33000, name: "Pack Gélules Kaylie + Tisane Minceur", sku: "PK-06" },
-  "pack-7": { price: 20000, name: "Pack Gélules Skinny + Thé Détox", sku: "PK-07" },
-  "pack-8": { price: 23000, name: "Pack Gélules Skinny + Tisane Minceur", sku: "PK-08" },
-  "pack-nourrice-1": { price: 14000, name: "Pack Gélules Nourrice + Caolin Nourrice", sku: "PKN-01" },
-  "pack-nourrice-2": { price: 14000, name: "Pack Gélules Nourrice + Tisane Nourrice", sku: "PKN-02" },
-  "pack-nourrice-3": { price: 10000, name: "Pack Caolin Nourrice + Tisane Nourrice", sku: "PKN-03" },
-  "pack-nourrice-4": { price: 20000, name: "Pack Complet 3 Produits Nourrice", sku: "PKN-04" },
-  "pack-nourrice-kit": { price: 15000, name: "Kit Ventre Plat Nourrice (Promo)", sku: "PKN-KIT" },
-};
+import { MOCK_PRODUCTS } from "../mockDb";
 
 const LOCAL_SHIPPING_ZONES: Record<string, number> = {
   "zone-abidjan-std": 1000,
@@ -87,13 +49,15 @@ export class CartService {
     const calculatedItems: CartCalculationResult["items"] = [];
     let subtotal = 0;
 
-    let useLocalFallback = false;
-    try {
-      // Test firestore connection
-      await adminDb.collection("products").limit(1).get();
-    } catch (e) {
-      console.warn("Firestore connection failed, using local fallback data");
-      useLocalFallback = true;
+    let useLocalFallback = !isFirebaseConfigured();
+    if (!useLocalFallback) {
+      try {
+        // Test firestore connection
+        await adminDb.collection("products").limit(1).get();
+      } catch (e) {
+        console.warn("Firestore connection failed, using local fallback data");
+        useLocalFallback = true;
+      }
     }
 
     // 1. Process items
@@ -106,13 +70,14 @@ export class CartService {
       let imageUrl = "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop";
 
       if (useLocalFallback) {
-        const localProduct = LOCAL_PRODUCTS[item.productId] || LOCAL_PACKS[item.productId];
+        const localProduct = MOCK_PRODUCTS.find(p => p.id === item.productId || p.slug === item.productId);
         if (!localProduct) {
           throw new Error(`Le produit avec l'ID ${item.productId} n'existe pas.`);
         }
-        unitPrice = localProduct.price;
+        unitPrice = localProduct.price || 0;
         sku = localProduct.sku;
         name = localProduct.name;
+        imageUrl = localProduct.images[0]?.url || imageUrl;
       } else {
         const productDoc = await adminDb.collection("products").doc(item.productId).get();
         if (!productDoc.exists) {

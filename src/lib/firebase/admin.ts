@@ -72,4 +72,14 @@ export const adminStorage = new Proxy({} as any, {
   }
 });
 
+export function isFirebaseConfigured(): boolean {
+  if (typeof window !== "undefined") return false;
+  try {
+    const key = env.FIREBASE_ADMIN_PRIVATE_KEY || "";
+    return key.includes("-----BEGIN PRIVATE KEY-----") && !key.includes("devkeyhere") && !key.includes("devkey");
+  } catch (e) {
+    return false;
+  }
+}
+
 export { FieldValue };
