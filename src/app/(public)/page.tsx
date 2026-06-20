@@ -8,6 +8,11 @@ import Marquee from "@/components/ui/Marquee";
 import RitualQuiz from "@/components/ui/RitualQuiz";
 import HydrationCalculator from "@/components/ui/HydrationCalculator";
 import CureTracker from "@/components/ui/CureTracker";
+import Testimonials from "@/components/ui/Testimonials";
+import ComparisonTable from "@/components/ui/ComparisonTable";
+import TrustBadges from "@/components/ui/TrustBadges";
+import FaqSection from "@/components/ui/FaqSection";
+import NewsletterSection from "@/components/ui/NewsletterSection";
 
 // =====================================================================
 // HOOK: Compteur animé
@@ -899,6 +904,23 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ====== TRUST BADGES ====== */}
+      <TrustBadges />
+
+      {/* ====== TESTIMONIALS ====== */}
+      <Testimonials />
+
+      {/* ====== COMPARISON TABLE ====== */}
+      <ComparisonTable />
+
+      {/* ====== FAQ ====== */}
+      <FaqSection />
+
+      {/* ====== NEWSLETTER ====== */}
+      <NewsletterSection />
+
     </div>
+
   );
 }
