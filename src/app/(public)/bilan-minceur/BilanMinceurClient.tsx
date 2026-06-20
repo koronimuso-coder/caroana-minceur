@@ -6,20 +6,18 @@ import { useCart } from "@/hooks/useCart";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 import { 
   Calculator, 
-  User, 
   ArrowRight, 
   ArrowLeft, 
   Check, 
   Scale, 
-  Target, 
-  Flame, 
   Leaf, 
   Sparkles, 
   CheckCircle, 
   ChevronRight, 
-  TrendingDown, 
   ShoppingBag,
-  Activity
+  Activity,
+  AlertTriangle,
+  Baby
 } from "lucide-react";
 
 type QuizState = {
@@ -30,6 +28,9 @@ type QuizState = {
   weight: number;
   objective: "ventre-plat" | "perte-rapide" | "perte-intensive" | "detox-energie";
   targetArea: "ventre" | "cuisses" | "corps-entier" | "drainage";
+  isPregnant: boolean;
+  isBreastfeeding: boolean;
+  hasAllergies: boolean;
 };
 
 const INITIAL_STATE: QuizState = {
@@ -40,9 +41,11 @@ const INITIAL_STATE: QuizState = {
   weight: 68,
   objective: "ventre-plat",
   targetArea: "ventre",
+  isPregnant: false,
+  isBreastfeeding: false,
+  hasAllergies: false,
 };
 
-// Recommended products based on goal
 const RECOMMENDATIONS = {
   "ventre-plat": {
     id: "pack-4",
@@ -83,6 +86,17 @@ const RECOMMENDATIONS = {
     imageUrl: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
     benefits: ["Élimination des toxines accumulées", "Action anti-ballonnement", "100% naturel et riche en antioxydants"],
     badge: "Duo Détox & Légèreté"
+  },
+  // Breastfeeding mother specific recommendations (Amélioration 43)
+  "nourrice-kit": {
+    id: "pack-nourrice-kit",
+    name: "Kit Ventre Plat Nourrice (Méga Promo)",
+    price: 15000,
+    sku: "PKN-KIT",
+    description: "Formulation post-partum et allaitement spécialement conçue pour les jeunes mamans. Allie Gélules nourrice, Tisane nourrice et Caolin pour raffermir la peau et aplatir le ventre en douceur sans altérer le lait maternel.",
+    imageUrl: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    benefits: ["100% compatible allaitement", "Raffermit la sangle abdominale post-grossesse", "Aide à éliminer l'eau et les gaz"],
+    badge: "Spécial Jeune Maman 🍼"
   }
 };
 
@@ -108,6 +122,11 @@ export default function BilanMinceurClient() {
   const heightInMeters = formData.height / 100;
   const imc = parseFloat((formData.weight / (heightInMeters * heightInMeters)).toFixed(1));
 
+  // Determine Lorentz Ideal weight range (Amélioration 42)
+  const lorentzIdealWeight = formData.gender === "femme"
+    ? Math.round((formData.height - 100) - ((formData.height - 150) / 2.5))
+    : Math.round((formData.height - 100) - ((formData.height - 150) / 4));
+
   // Determine BMI category & colors
   let imcCategory = "";
   let imcColor = "";
@@ -115,28 +134,28 @@ export default function BilanMinceurClient() {
   let imcAdvice = "";
 
   if (imc < 18.5) {
-    imcCategory = "Insuffisance pondérale (Maigreur)";
-    imcColor = "#3b82f6"; // Blue
+    imcCategory = "Insuffisance pondérale";
+    imcColor = "#3b82f6";
     imcTextColor = "text-blue-500";
     imcAdvice = "Votre IMC indique un poids inférieur à la moyenne. Nous vous conseillons de vous tourner vers des cures douces comme le Thé Détox pour purifier votre corps, tout en maintenant une alimentation riche et équilibrée.";
   } else if (imc >= 18.5 && imc < 25) {
-    imcCategory = "Poids normal (Silhouette équilibrée)";
-    imcColor = "#10b981"; // Emerald
+    imcCategory = "Poids normal";
+    imcColor = "#10b981";
     imcTextColor = "text-emerald-500";
     imcAdvice = "Félicitations, vous êtes dans une fourchette de poids saine ! Pour affiner votre sangle abdominale ou éliminer de petites toxines localisées, une cure ventre plat ou détox est tout à fait adaptée pour sculpter votre silhouette.";
   } else if (imc >= 25 && imc < 30) {
     imcCategory = "Surpoids";
-    imcColor = "#f59e0b"; // Amber
+    imcColor = "#f59e0b";
     imcTextColor = "text-amber-500";
     imcAdvice = "Votre IMC indique un léger surpoids. Nos cures botaniques (Skinny pour un résultat express, ou Kaylie pour un rééquilibrage de fond) combinées à une alimentation contrôlée vous aideront à éliminer l'excès de masse graisseuse durablement.";
   } else if (imc >= 30 && imc < 35) {
     imcCategory = "Obésité modérée";
-    imcColor = "#ef4444"; // Red
+    imcColor = "#ef4444";
     imcTextColor = "text-red-500";
     imcAdvice = "Votre IMC indique une obésité modérée. Il est fortement recommandé d'adopter une cure d'un mois complète, comme le Pack Gélules Kaylie + Thé Détox, pour stimuler activement la combustion des graisses profondes et drainer l'organisme.";
   } else {
     imcCategory = "Obésité sévère / morbide";
-    imcColor = "#b91c1c"; // Dark Red
+    imcColor = "#b91c1c";
     imcTextColor = "text-red-700 dark:text-red-400";
     imcAdvice = "Votre IMC indique une obésité importante. Nous vous conseillons notre Cure Intensive Minceur d'un mois complet (Gélules Minceur Kaylie) pour amorcer une perte de poids significative (supérieure à 9kg), tout en sollicitant un accompagnement médical.";
   }
@@ -145,8 +164,15 @@ export default function BilanMinceurClient() {
   const minNormalWeight = Math.round(18.5 * heightInMeters * heightInMeters);
   const maxNormalWeight = Math.round(24.9 * heightInMeters * heightInMeters);
 
-  // Recommended Product Recommendation Object
-  const recommendedProduct = RECOMMENDATIONS[formData.objective];
+  // Recommended Product Recommendation Object (Amélioration 43 postpartum target recommendation)
+  const getRecommendedProduct = () => {
+    if (formData.isBreastfeeding) {
+      return RECOMMENDATIONS["nourrice-kit"];
+    }
+    return RECOMMENDATIONS[formData.objective];
+  };
+
+  const recommendedProduct = getRecommendedProduct();
 
   const handleAddToCart = () => {
     addItem({
@@ -200,7 +226,7 @@ export default function BilanMinceurClient() {
             boxShadow: "0 10px 30px rgba(0,0,0,0.05)"
           }}>
           
-          {/* Progress Bar (Visible only for quiz steps) */}
+          {/* Progress Bar */}
           {step <= 3 && (
             <div className="w-full h-1.5 flex bg-neutral-200 dark:bg-neutral-800">
               <div 
@@ -273,6 +299,52 @@ export default function BilanMinceurClient() {
                         style={{ borderColor: "var(--color-theme-border)" }}
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Postpartum & Allergens Compatibility Section (Amélioration 43) */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-xs font-bold uppercase tracking-wider opacity-60">Contre-indications & Profil médical</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button
+                      onClick={() => {
+                        updateField("isPregnant", !formData.isPregnant);
+                        if (!formData.isPregnant) updateField("isBreastfeeding", false);
+                      }}
+                      className="p-3 border rounded-xl flex items-center justify-between text-left cursor-pointer transition-colors"
+                      style={{
+                        background: formData.isPregnant ? "rgba(239,68,68,0.05)" : "transparent",
+                        borderColor: formData.isPregnant ? "#ef4444" : "var(--color-theme-border)"
+                      }}
+                    >
+                      <span className="text-xs font-bold">🤰 Enceinte</span>
+                      {formData.isPregnant && <CheckCircle className="w-4 h-4 text-red-500" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        updateField("isBreastfeeding", !formData.isBreastfeeding);
+                        if (!formData.isBreastfeeding) updateField("isPregnant", false);
+                      }}
+                      className="p-3 border rounded-xl flex items-center justify-between text-left cursor-pointer transition-colors"
+                      style={{
+                        background: formData.isBreastfeeding ? "rgba(16,185,129,0.05)" : "transparent",
+                        borderColor: formData.isBreastfeeding ? "var(--color-theme-accent)" : "var(--color-theme-border)"
+                      }}
+                    >
+                      <span className="text-xs font-bold">🍼 Allaitement</span>
+                      {formData.isBreastfeeding && <CheckCircle className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                    <button
+                      onClick={() => updateField("hasAllergies", !formData.hasAllergies)}
+                      className="p-3 border rounded-xl flex items-center justify-between text-left cursor-pointer transition-colors"
+                      style={{
+                        background: formData.hasAllergies ? "rgba(245,158,11,0.05)" : "transparent",
+                        borderColor: formData.hasAllergies ? "#f59e0b" : "var(--color-theme-border)"
+                      }}
+                    >
+                      <span className="text-xs font-bold">🌾 Allergies plantes</span>
+                      {formData.hasAllergies && <CheckCircle className="w-4 h-4 text-amber-500" />}
+                    </button>
                   </div>
                 </div>
 
@@ -384,13 +456,13 @@ export default function BilanMinceurClient() {
                   </div>
                 </div>
 
-                {/* Display preliminary info */}
-                <div className="p-4 rounded-xl border flex items-center gap-4" style={{ background: "rgba(var(--color-theme-accent-rgb), 0.02)", borderColor: "var(--color-theme-border)" }}>
+                {/* Ideal weight prediction box */}
+                <div className="p-4 rounded-xl border flex items-center gap-4 bg-emerald-500/[0.02]" style={{ borderColor: "var(--color-theme-border)" }}>
                   <Scale className="w-10 h-10 opacity-40 text-emerald-500 flex-shrink-0" />
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Estimation rapide</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-wider opacity-60">Estimation du Poids Cible Idéal</h4>
                     <p className="text-xs opacity-75 mt-0.5">
-                      Avec une taille de {formData.height} cm et un poids de {formData.weight} kg, votre indice IMC calculé sera de <strong className="text-emerald-500">{imc}</strong>. Les détails complets s'afficheront à l'étape suivante.
+                      Selon la formule de Lorentz tenant compte de votre taille de {formData.height} cm et de votre genre, votre poids cible conseillé est d'environ <strong className="text-emerald-500">{lorentzIdealWeight} kg</strong>.
                     </p>
                   </div>
                 </div>
@@ -511,168 +583,176 @@ export default function BilanMinceurClient() {
                   <p className="text-xs opacity-60 mt-1">Calculé en temps réel selon les algorithmes nutritionnels Caroana Minceur</p>
                 </div>
 
+                {/* Pregancy warning blocks (Allergens checklist) */}
+                {formData.isPregnant && (
+                  <div className="p-4 rounded-xl border flex gap-3 bg-red-500/5 border-red-500/20 text-xs text-red-600 dark:text-red-400">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0 animate-pulse" />
+                    <div>
+                      <strong className="block uppercase text-[10px]">Contre-indication Grossesse 🤰</strong>
+                      Toutes nos cures actives et tisanes à base de plantes d'Afrique sont déconseillées durant la grossesse. Nous vous recommandons de reporter votre cure après l'accouchement.
+                    </div>
+                  </div>
+                )}
+
                 {/* IMC Stats Section */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                  {/* Left Column: Gauge and numbers */}
-                  <div className="md:col-span-5 p-5 rounded-2xl border flex flex-col justify-center items-center text-center"
-                    style={{ background: "rgba(var(--color-theme-accent-rgb), 0.02)", borderColor: "var(--color-theme-border)" }}>
-                    <span className="text-xs font-bold uppercase tracking-widest opacity-60">Indice de Masse Corporelle</span>
-                    <span className="text-5xl font-black font-serif my-2 tracking-tight" style={{ color: imcColor }}>
-                      {imc}
-                    </span>
-                    <span className={`text-sm font-black px-3 py-1 rounded-full bg-white dark:bg-neutral-900 border text-center shadow-sm ${imcTextColor}`}>
-                      {imcCategory}
-                    </span>
+                {!formData.isPregnant && (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    {/* Left Column: Gauge and numbers */}
+                    <div className="md:col-span-5 p-5 rounded-2xl border flex flex-col justify-center items-center text-center bg-stone-50/50 dark:bg-neutral-900/30"
+                      style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-xs font-bold uppercase tracking-widest opacity-60">Indice de Masse Corporelle</span>
+                      <span className="text-5xl font-black font-serif my-2 tracking-tight" style={{ color: imcColor }}>
+                        {imc}
+                      </span>
+                      <span className={`text-sm font-black px-3 py-1 rounded-full bg-white dark:bg-neutral-900 border text-center shadow-sm ${imcTextColor}`}>
+                        {imcCategory}
+                      </span>
 
-                    {/* Animated visual gauge slider representation */}
-                    <div className="w-full mt-6 bg-neutral-200 dark:bg-neutral-800 h-2.5 rounded-full relative overflow-hidden">
-                      {/* Color blocks mapping */}
-                      <div className="absolute inset-y-0 left-0 w-[46%] bg-blue-400" />
-                      <div className="absolute inset-y-0 left-[46%] w-[16%] bg-emerald-500" />
-                      <div className="absolute inset-y-0 left-[62%] w-[13%] bg-amber-500" />
-                      <div className="absolute inset-y-0 left-[75%] w-[13%] bg-red-500" />
-                      <div className="absolute inset-y-0 left-[88%] w-[12%] bg-red-800" />
-                      
-                      {/* Indicator mark */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-1 bg-white border border-black shadow z-10" 
-                        style={{ 
-                          // Scale BMI value from 15 to 40 inside 0% to 100%
-                          left: `${Math.min(98, Math.max(2, ((imc - 15) / 25) * 100))}%` 
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Gauge labels */}
-                    <div className="w-full flex justify-between text-[8px] opacity-40 uppercase font-black tracking-widest mt-2 px-1">
-                      <span>15 (Maigre)</span>
-                      <span>22 (Normal)</span>
-                      <span>30 (Obèse)</span>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Calculations & Analysis */}
-                  <div className="md:col-span-7 flex flex-col justify-between space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-emerald-500" />
-                        <h3 className="font-bold text-sm uppercase tracking-wider opacity-85">Analyse de masse</h3>
+                      {/* Animated visual gauge slider representation */}
+                      <div className="w-full mt-6 bg-neutral-200 dark:bg-neutral-800 h-2.5 rounded-full relative overflow-hidden">
+                        <div className="absolute inset-y-0 left-0 w-[46%] bg-blue-400" />
+                        <div className="absolute inset-y-0 left-[46%] w-[16%] bg-emerald-500" />
+                        <div className="absolute inset-y-0 left-[62%] w-[13%] bg-amber-500" />
+                        <div className="absolute inset-y-0 left-[75%] w-[13%] bg-red-500" />
+                        <div className="absolute inset-y-0 left-[88%] w-[12%] bg-red-800" />
+                        
+                        <div 
+                          className="absolute top-0 bottom-0 w-1 bg-white border border-black shadow z-10" 
+                          style={{ 
+                            left: `${Math.min(98, Math.max(2, ((imc - 15) / 25) * 100))}%` 
+                          }}
+                        />
                       </div>
                       
-                      <p className="text-xs leading-relaxed opacity-75">
-                        {imcAdvice}
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="p-3 rounded-xl border bg-stone-50/50 dark:bg-neutral-900/50" style={{ borderColor: "var(--color-theme-border)" }}>
-                          <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block">Fourchette cible saine</span>
-                          <strong className="text-sm block mt-0.5 text-emerald-600 dark:text-emerald-400">
-                            {minNormalWeight} kg - {maxNormalWeight} kg
-                          </strong>
-                        </div>
-                        <div className="p-3 rounded-xl border bg-stone-50/50 dark:bg-neutral-900/50" style={{ borderColor: "var(--color-theme-border)" }}>
-                          <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block">Métabolisme de base</span>
-                          <strong className="text-sm block mt-0.5 text-emerald-600 dark:text-emerald-400">
-                            {/* Simple Harris-Benedict formula estimation */}
-                            {formData.gender === "femme" 
-                              ? Math.round(655 + (9.6 * formData.weight) + (1.8 * formData.height) - (4.7 * formData.age))
-                              : Math.round(66 + (13.7 * formData.weight) + (5 * formData.height) - (6.8 * formData.age))} kcal/jour
-                          </strong>
-                        </div>
+                      <div className="w-full flex justify-between text-[8px] opacity-40 uppercase font-black tracking-widest mt-2 px-1">
+                        <span>15 (Maigre)</span>
+                        <span>22 (Normal)</span>
+                        <span>30 (Obèse)</span>
                       </div>
                     </div>
 
-                    {/* Drink / Water recommendation */}
-                    <div className="p-3 rounded-xl border flex items-start gap-2.5" style={{ borderColor: "var(--color-theme-border)", background: "rgba(16,185,129,0.03)" }}>
-                      <Leaf className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <div className="text-[11px] leading-snug opacity-80">
-                        <strong>Conseil hydratation active :</strong> Votre profil d'activité nécessite de consommer environ <strong>{(formData.weight * 0.035).toFixed(1)} Litres</strong> d'eau par jour. Infusez vos tisanes minceur le matin à jeun et le soir 30 min avant le coucher pour optimiser le drainage lymphatique.
+                    {/* Right Column: Calculations & Analysis */}
+                    <div className="md:col-span-7 flex flex-col justify-between space-y-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-emerald-500" />
+                          <h3 className="font-bold text-sm uppercase tracking-wider opacity-85">Analyse de masse</h3>
+                        </div>
+                        
+                        <p className="text-xs leading-relaxed opacity-75">
+                          {imcAdvice}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                          <div className="p-3 rounded-xl border bg-stone-50/50 dark:bg-neutral-900/50" style={{ borderColor: "var(--color-theme-border)" }}>
+                            <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block">Poids cible idéal (Lorentz)</span>
+                            <strong className="text-sm block mt-0.5 text-emerald-600 dark:text-emerald-400">
+                              {lorentzIdealWeight} kg
+                            </strong>
+                          </div>
+                          <div className="p-3 rounded-xl border bg-stone-50/50 dark:bg-neutral-900/50" style={{ borderColor: "var(--color-theme-border)" }}>
+                            <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 block">Bilan normal santé</span>
+                            <strong className="text-sm block mt-0.5 text-emerald-600 dark:text-emerald-400">
+                              {minNormalWeight} - {maxNormalWeight} kg
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Drink / Water recommendation */}
+                      <div className="p-3 rounded-xl border flex items-start gap-2.5 bg-emerald-500/5" style={{ borderColor: "var(--color-theme-border)" }}>
+                        <Leaf className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <div className="text-[11px] leading-snug opacity-80">
+                          <strong>Conseil hydratation active :</strong> Votre profil d'activité nécessite de consommer environ <strong>{(formData.weight * 0.035).toFixed(1)} Litres</strong> d'eau par jour. Infusez vos tisanes minceur le matin à jeun et le soir 30 min avant le coucher pour optimiser le drainage lymphatique.
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Recommended Product Box */}
-                <div className="border-2 rounded-2xl overflow-hidden shadow-md flex flex-col md:flex-row"
-                  style={{ borderColor: "var(--color-theme-accent)" }}>
-                  
-                  {/* Image side */}
-                  <div className="md:w-1/3 relative min-h-[160px] bg-neutral-100 dark:bg-neutral-800">
-                    <img
-                      src={recommendedProduct.imageUrl}
-                      alt={recommendedProduct.name}
-                      className="w-full h-full object-cover absolute inset-0"
-                    />
-                    <div className="absolute top-2 left-2 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm">
-                      {recommendedProduct.badge}
-                    </div>
-                  </div>
-
-                  {/* Details side */}
-                  <div className="md:w-2/3 p-5 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <span className="text-[9px] font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase">Cure Recommandée</span>
-                          <h3 className="font-serif text-lg font-bold mt-0.5 leading-snug">{recommendedProduct.name}</h3>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs opacity-50 line-through block">
-                            {Math.round(recommendedProduct.price * 1.25).toLocaleString("fr-FR")} FCFA
-                          </span>
-                          <strong className="text-lg font-serif text-emerald-600 dark:text-emerald-400">
-                            {recommendedProduct.price.toLocaleString("fr-FR")} FCFA
-                          </strong>
-                        </div>
+                {!formData.isPregnant && (
+                  <div className="border-2 rounded-2xl overflow-hidden shadow-md flex flex-col md:flex-row bg-theme-card"
+                    style={{ borderColor: "var(--color-theme-accent)" }}>
+                    
+                    {/* Image side */}
+                    <div className="md:w-1/3 relative min-h-[160px] bg-neutral-100 dark:bg-neutral-800">
+                      <img
+                        src={recommendedProduct.imageUrl}
+                        alt={recommendedProduct.name}
+                        className="w-full h-full object-cover absolute inset-0"
+                      />
+                      <div className="absolute top-2 left-2 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full shadow-sm">
+                        {recommendedProduct.badge}
                       </div>
-
-                      <p className="text-xs opacity-75 mt-2 leading-relaxed">
-                        {recommendedProduct.description}
-                      </p>
-
-                      <ul className="mt-3 space-y-1.5">
-                        {recommendedProduct.benefits.map((benefit, idx) => (
-                          <li key={idx} className="flex items-center gap-2 text-[11px] font-medium text-stone-700 dark:text-stone-300">
-                            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                            <span>{benefit}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t flex flex-col sm:flex-row gap-3 items-center justify-between" style={{ borderColor: "var(--color-theme-border)" }}>
-                      <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">
-                        Livraison Abidjan & Intérieur disponible
-                      </span>
-                      
-                      <div className="flex gap-2 w-full sm:w-auto">
-                        {isAdded ? (
-                          <div className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 text-white bg-emerald-600 shadow-lg animate-pulse">
-                            <Check className="w-4 h-4" />
-                            Ajouté au panier !
+                    {/* Details side */}
+                    <div className="md:w-2/3 p-5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <span className="text-[9px] font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase">Cure Recommandée</span>
+                            <h3 className="font-serif text-lg font-bold mt-0.5 leading-snug">{recommendedProduct.name}</h3>
                           </div>
-                        ) : (
-                          <button
-                            onClick={handleAddToCart}
-                            className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 text-white transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
-                            style={{ background: "var(--color-theme-accent)", boxShadow: "0 4px 15px rgba(var(--color-theme-accent-rgb), 0.3)" }}>
-                            <ShoppingBag className="w-4 h-4" />
-                            Ajouter & Commander
-                          </button>
-                        )}
-                        
-                        <Link
-                          href="/panier"
-                          className="px-4 py-2.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider text-center transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                          style={{ borderColor: "var(--color-theme-border)" }}>
-                          Voir Panier
-                        </Link>
+                          <div className="text-right">
+                            <span className="text-xs opacity-50 line-through block">
+                              {Math.round(recommendedProduct.price * 1.25).toLocaleString("fr-FR")} F
+                            </span>
+                            <strong className="text-lg font-serif text-emerald-600 dark:text-emerald-400">
+                              {recommendedProduct.price.toLocaleString("fr-FR")} F
+                            </strong>
+                          </div>
+                        </div>
+
+                        <p className="text-xs opacity-75 mt-2 leading-relaxed">
+                          {recommendedProduct.description}
+                        </p>
+
+                        <ul className="mt-3 space-y-1.5">
+                          {recommendedProduct.benefits.map((benefit, idx) => (
+                            <li key={idx} className="flex items-center gap-2 text-[11px] font-medium text-stone-700 dark:text-stone-300">
+                              <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
+
+                      <div className="mt-5 pt-3 border-t flex flex-col sm:flex-row gap-3 items-center justify-between" style={{ borderColor: "var(--color-theme-border)" }}>
+                        <span className="text-[10px] opacity-50 font-bold uppercase tracking-wider">
+                          Livraison Abidjan & Intérieur disponible
+                        </span>
+                        
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          {isAdded ? (
+                            <div className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 text-white bg-emerald-600 shadow-lg animate-pulse">
+                              <Check className="w-4 h-4" />
+                              Ajouté !
+                            </div>
+                          ) : (
+                            <button
+                              onClick={handleAddToCart}
+                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 text-white transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-md"
+                              style={{ background: "var(--color-theme-accent)", boxShadow: "0 4px 15px rgba(var(--color-theme-accent-rgb), 0.3)" }}>
+                              <ShoppingBag className="w-4 h-4" />
+                              Ajouter au panier
+                            </button>
+                          )}
+                          
+                          <Link
+                            href="/panier"
+                            className="px-4 py-2.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider text-center transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                            style={{ borderColor: "var(--color-theme-border)" }}>
+                            Voir Panier
+                          </Link>
+                        </div>
+                      </div>
+
                     </div>
 
                   </div>
-
-                </div>
+                )}
 
                 {/* Buttons block */}
                 <div className="flex justify-between items-center pt-4">

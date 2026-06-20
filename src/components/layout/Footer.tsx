@@ -1,10 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Phone, MessageCircle, Mail, MapPin, Instagram, Facebook, ArrowRight, Sparkles, Leaf } from "lucide-react";
+import { 
+  Phone, 
+  MessageCircle, 
+  Mail, 
+  MapPin, 
+  Instagram, 
+  Facebook, 
+  ArrowRight, 
+  Sparkles, 
+  Leaf, 
+  ShieldCheck, 
+  Truck, 
+  RotateCcw, 
+  Award,
+  CheckCircle,
+  Copy
+} from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const shopLinks = [
     { name: "Gélules Ventre Plat — 10 000 F", href: "/boutique" },
@@ -17,13 +37,12 @@ export default function Footer() {
 
   const infoLinks = [
     { name: "À Propos de Caroana", href: "/a-propos" },
-    { name: "Bilan Minceur 🌿", href: "/bilan-minceur" },
+    { name: "Bilan Minceur & IMC 🌿", href: "/bilan-minceur" },
+    { name: "Suivi de Cure 📅", href: "/suivi-cure" },
     { name: "Minuteur d'Infusion ⏱️", href: "/rituel-timer" },
     { name: "Suivre ma Commande 📦", href: "/suivi-commande" },
-    { name: "FAQ — Questions fréquentes", href: "/#faq" },
-    { name: "Contact & Commande", href: "/contact" },
-    { name: "Politique de Livraison", href: "/contact" },
-    { name: "Conditions Générales", href: "/contact" },
+    { name: "Plan du Site (Sitemap) 🗺️", href: "/sitemap.xml" },
+    { name: "Conditions de Vente & Livraison", href: "/contact" },
   ];
 
   const socials = [
@@ -31,6 +50,27 @@ export default function Footer() {
     { icon: <Instagram className="w-4 h-4" />, href: "https://instagram.com", label: "Instagram", color: "#E4405F" },
     { icon: <Facebook className="w-4 h-4" />, href: "https://facebook.com", label: "Facebook", color: "#1877F2" },
   ];
+
+  // E-commerce promises trust badges (Amélioration 13, 17)
+  const trustBadges = [
+    { icon: <ShieldCheck className="w-5 h-5" />, title: "Ingrédients 100% Organiques", desc: "Plantes d'Afrique récoltées à la main" },
+    { icon: <Truck className="w-5 h-5" />, title: "Livraison Express", desc: "Sous 24h à Abidjan & 48h à l'intérieur" },
+    { icon: <RotateCcw className="w-5 h-5" />, title: "Conseils botanistes", desc: "Suivi WhatsApp gratuit de votre cure" },
+    { icon: <Award className="w-5 h-5" />, title: "Satisfait ou Accompagné", desc: "Une écoute active de toutes vos cibles" },
+  ];
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setIsSubscribed(true);
+    }
+  };
+
+  const handleCopyCoupon = () => {
+    navigator.clipboard.writeText("CAROANA10");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <footer
@@ -46,12 +86,86 @@ export default function Footer() {
         }}
       />
 
-      {/* === MAIN FOOTER GRID === */}
+      {/* ====== TRUST BADGES BAR ====== */}
+      <div className="border-b relative z-10" style={{ borderColor: "var(--color-theme-border)", background: "rgba(var(--color-theme-accent-rgb), 0.02)" }}>
+        <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {trustBadges.map((badge, idx) => (
+            <div key={idx} className="flex gap-3 items-start">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-neutral-900 border flex-shrink-0" style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-accent)" }}>
+                {badge.icon}
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-black uppercase tracking-wider leading-snug">{badge.title}</h4>
+                <p className="text-[10px] opacity-60 leading-relaxed">{badge.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ====== NEWSLETTER & NEWS SIGNUP ====== */}
+      <div className="border-b relative z-10" style={{ borderColor: "var(--color-theme-border)" }}>
+        <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="space-y-2 text-center lg:text-left max-w-lg">
+            <h3 className="font-serif text-xl sm:text-2xl font-bold">Inscrivez-vous à nos secrets de plantes</h3>
+            <p className="text-xs opacity-75">
+              Recevez des conseils exclusifs pour sculpter votre corps et bénéficiez de **10% de réduction immédiate** sur votre première cure.
+            </p>
+          </div>
+
+          <div className="w-full max-w-md">
+            {!isSubscribed ? (
+              <form onSubmit={handleSubscribe} className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="Votre adresse email..."
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 px-4 py-3 border rounded-xl text-xs focus:outline-none transition-all"
+                  style={{
+                    background: "var(--color-theme-card)",
+                    borderColor: "var(--color-theme-border)",
+                    color: "var(--color-theme-fg)",
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-white flex items-center gap-1 hover:opacity-90 transition-all cursor-pointer flex-shrink-0"
+                  style={{ background: "var(--color-theme-accent)" }}
+                >
+                  S'inscrire
+                </button>
+              </form>
+            ) : (
+              <div className="p-4 rounded-xl border flex flex-col sm:flex-row justify-between items-center gap-4 bg-emerald-500/5" style={{ borderColor: "rgba(16,185,129,0.2)" }}>
+                <div className="flex gap-2.5 items-center">
+                  <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                  <div>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block uppercase">Inscription Validée !</span>
+                    <span className="text-[10px] opacity-75">Utilisez le code promo ci-contre.</span>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={handleCopyCoupon}
+                  className="flex items-center gap-2 px-3.5 py-2 border rounded-xl text-xs font-black cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
+                  style={{ borderColor: "var(--color-theme-border)" }}
+                >
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">CAROANA10</span>
+                  {copied ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 opacity-60" />}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ====== MAIN FOOTER GRID ====== */}
       <div className="max-w-7xl mx-auto px-6 pt-16 pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative z-10">
 
         {/* Col 1: Brand */}
         <div className="space-y-6">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group w-fit">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
@@ -72,7 +186,6 @@ export default function Footer() {
             Marque ivoirienne de bien-être naturel. Inspirée des plantes africaines pour accompagner votre silhouette au quotidien.
           </p>
 
-          {/* Tagline badge */}
           <div
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
             style={{ background: "rgba(var(--color-theme-accent-rgb), 0.08)", color: "var(--color-theme-accent)", border: "1px solid rgba(var(--color-theme-accent-rgb), 0.2)" }}
@@ -208,7 +321,6 @@ export default function Footer() {
             </li>
           </ul>
 
-          {/* WhatsApp CTA big */}
           <a
             href="https://wa.me/2250143655088?text=Bonjour%20Caroana%20Minceur%20%F0%9F%8C%BF%2C%20je%20souhaite%20commander%20!"
             target="_blank"
@@ -227,7 +339,7 @@ export default function Footer() {
             💬 Commander maintenant
           </a>
 
-          {/* Livraison info */}
+          {/* Delivery details */}
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between text-[10px]">
               <span style={{ color: "var(--color-theme-muted)" }}>🏙️ Livraison Abidjan</span>

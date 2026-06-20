@@ -1,8 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ShoppingCart, MessageCircle, Sparkles, Tag, Package, Zap, ArrowRight, Star, Clock } from "lucide-react";
+import { 
+  ShoppingCart, 
+  MessageCircle, 
+  Sparkles, 
+  Tag, 
+  Package, 
+  Zap, 
+  ArrowRight, 
+  Star, 
+  Clock, 
+  Heart, 
+  ArrowUpDown, 
+  ChevronRight, 
+  Check, 
+  X, 
+  AlertCircle,
+  Copy,
+  Scale
+} from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import ScrollReveal from "@/components/ui/ScrollReveal";
 
@@ -19,7 +37,7 @@ const PRODUITS = [
     badge: null, promo: false,
     icon: "💊",
     image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 12,
   },
   {
     id: "p-kaylie", slug: "gelules-kaylie", sku: "GK-01",
@@ -30,7 +48,7 @@ const PRODUITS = [
     badge: "⭐ Premium", promo: false,
     icon: "💎",
     image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
-    stock: 50,
+    stock: 4,
     detail: "Cure d'un mois · Perdre de 9 kg à plus",
   },
   {
@@ -42,7 +60,7 @@ const PRODUITS = [
     badge: "⚡ Express", promo: false,
     icon: "⚡",
     image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
-    stock: 80,
+    stock: 8,
     detail: "Cure d'une semaine · Perdre de 1 kg à 9 kg",
   },
   {
@@ -54,7 +72,7 @@ const PRODUITS = [
     badge: null, promo: false,
     icon: "🍵",
     image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 35,
   },
   {
     id: "p3", slug: "tisane-ventre-plat", sku: "TVP-01",
@@ -65,7 +83,7 @@ const PRODUITS = [
     badge: null, promo: false,
     icon: "🌿",
     image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 18,
   },
   {
     id: "p-tisane-m", slug: "tisane-minceur", sku: "TM-01",
@@ -76,7 +94,7 @@ const PRODUITS = [
     badge: null, promo: false,
     icon: "🌱",
     image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 22,
   },
   {
     id: "p-produit-m", slug: "produit-minceur", sku: "PM-01",
@@ -87,7 +105,7 @@ const PRODUITS = [
     badge: null, promo: false,
     icon: "🫙",
     image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
-    stock: 60,
+    stock: 3,
   },
   {
     id: "p-gelules-nourrice", slug: "gelules-ventre-plat-nourrice", sku: "GVPN-01",
@@ -98,7 +116,7 @@ const PRODUITS = [
     badge: "🍼 Allaitement", promo: false,
     icon: "💊",
     image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 15,
   },
   {
     id: "p-caolin-nourrice", slug: "caolin-ventre-plat-nourrice", sku: "CVPN-01",
@@ -109,7 +127,7 @@ const PRODUITS = [
     badge: "🍼 Allaitement", promo: false,
     icon: "🫙",
     image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 19,
   },
   {
     id: "p-tisane-nourrice", slug: "tisane-ventre-plat-nourrice", sku: "TVPN-01",
@@ -120,7 +138,7 @@ const PRODUITS = [
     badge: "🍼 Allaitement", promo: false,
     icon: "🌿",
     image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
-    stock: 100,
+    stock: 14,
   },
 ];
 
@@ -299,17 +317,6 @@ const PACKS = [
   },
 ];
 
-// =====================================================================
-// LIVRAISON
-// =====================================================================
-const LIVRAISON = [
-  { zone: "Abidjan", tarif: "1 000 – 1 500 F CFA", icon: "🏙️" },
-  { zone: "Hors Abidjan", tarif: "2 500 F CFA", icon: "🌍" },
-];
-
-// =====================================================================
-// CATÉGORIES FILTRES
-// =====================================================================
 const CATEGORIES = [
   { label: "Tous les rituels", val: "all" },
   { label: "Produits seuls", val: "solo" },
@@ -321,7 +328,103 @@ const CATEGORIES = [
 export default function BoutiquePage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [sortOption, setSortOption] = useState<"default" | "price-asc" | "price-desc">("default");
   const addItem = useCart((state) => state.addItem);
+
+  // Wishlist State (Amélioration 3, 4)
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  useEffect(() => {
+    const saved = localStorage.getItem("caroana-wishlist");
+    if (saved) {
+      try { setWishlist(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const toggleWishlist = (id: string) => {
+    let updated;
+    if (wishlist.includes(id)) {
+      updated = wishlist.filter(item => item !== id);
+    } else {
+      updated = [...wishlist, id];
+    }
+    setWishlist(updated);
+    localStorage.setItem("caroana-wishlist", JSON.stringify(updated));
+    window.dispatchEvent(new Event("caroana-wishlist-update"));
+  };
+
+  // Comparator State (Amélioration 15)
+  const [compareList, setCompareList] = useState<any[]>([]);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
+
+  const toggleCompare = (prod: any) => {
+    if (compareList.some(item => item.id === prod.id)) {
+      setCompareList(compareList.filter(item => item.id !== prod.id));
+    } else {
+      if (compareList.length >= 3) {
+        alert("Vous pouvez comparer un maximum de 3 produits simultanément.");
+        return;
+      }
+      setCompareList([...compareList, prod]);
+    }
+  };
+
+  // Dynamic Dispatch Timer (Amélioration 48)
+  const [dispatchTime, setDispatchTime] = useState("");
+  useEffect(() => {
+    const calcTime = () => {
+      const now = new Date();
+      const target = new Date();
+      target.setHours(17, 0, 0, 0); // Dispatches at 17:00 CIV time
+      let diff = target.getTime() - now.getTime();
+      if (diff < 0) {
+        target.setDate(target.getDate() + 1);
+        diff = target.getTime() - now.getTime();
+      }
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setDispatchTime(`${hrs}h ${mins}m`);
+    };
+    calcTime();
+    const interval = setInterval(calcTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Promo Banner Countdown (Amélioration 7)
+  const [promoCountdown, setPromoCountdown] = useState("02:45:12");
+  useEffect(() => {
+    let secs = 9912; // simulated countdown seconds
+    const interval = setInterval(() => {
+      secs--;
+      if (secs <= 0) secs = 9912;
+      const h = Math.floor(secs / 3600).toString().padStart(2, "0");
+      const m = Math.floor((secs % 3600) / 60).toString().padStart(2, "0");
+      const s = (secs % 60).toString().padStart(2, "0");
+      setPromoCountdown(`${h}:${m}:${s}`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Quick Add handler (Amélioration 12)
+  const handleQuickAdd = (p: any) => {
+    addItem({
+      productId: p.id,
+      variantId: null,
+      sku: p.sku || "PK-NEW",
+      name: p.name,
+      price: p.price,
+      imageUrl: p.image,
+      quantity: 1
+    });
+    alert(`« ${p.name} » a été ajouté à votre panier !`);
+  };
+
+  // Copy Promo Code (Amélioration 16)
+  const [copiedCode, setCopiedCode] = useState(false);
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText("CAROANA10");
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   const getWhatsAppLink = (name: string, price: number) => {
     const msg = encodeURIComponent(
@@ -330,11 +433,8 @@ export default function BoutiquePage() {
     return `https://wa.me/2250143655088?text=${msg}`;
   };
 
-  // Filter logic
-  const showSolo = activeTab === "all" || activeTab === "solo" || activeTab === "capsules" || activeTab === "infusions";
-  const showPacks = activeTab === "all" || activeTab === "packs";
-
-  const filteredProduits = PRODUITS.filter((p) => {
+  // Filtering products
+  let filteredProduits = PRODUITS.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.shortDescription.toLowerCase().includes(search.toLowerCase());
     const matchCat = activeTab === "all" || activeTab === "solo" ||
@@ -343,66 +443,118 @@ export default function BoutiquePage() {
     return matchSearch && matchCat;
   });
 
+  // Sorting products
+  if (sortOption === "price-asc") {
+    filteredProduits = [...filteredProduits].sort((a, b) => a.price - b.price);
+  } else if (sortOption === "price-desc") {
+    filteredProduits = [...filteredProduits].sort((a, b) => b.price - a.price);
+  }
+
+  // Filter packs
   const filteredPacks = PACKS.filter((p) => {
     return p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.shortDescription.toLowerCase().includes(search.toLowerCase());
   });
 
-  return (
-    <div className="pt-16 min-h-screen transition-colors duration-500" style={{ background: "var(--color-theme-bg)", color: "var(--color-theme-fg)" }}>
+  const showSolo = activeTab === "all" || activeTab === "solo" || activeTab === "capsules" || activeTab === "infusions";
+  const showPacks = activeTab === "all" || activeTab === "packs";
 
-      {/* ====== PROMO BANNER ====== */}
+  return (
+    <div className="pt-16 min-h-screen transition-colors duration-500 relative" style={{ background: "var(--color-theme-bg)", color: "var(--color-theme-fg)" }}>
+
+      {/* ====== PROMO BANNER WITH COUNTDOWN (Amélioration 7) ====== */}
       <div
-        className="w-full py-3 px-4 text-center text-[10px] font-bold uppercase tracking-widest"
+        className="w-full py-3 px-4 text-center text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 flex-wrap"
         style={{
           background: "var(--color-theme-accent)",
           color: "var(--color-theme-bg)",
-          animation: "pulse-glow 4s ease-in-out infinite",
         }}
       >
-        <Tag className="inline w-3 h-3 mr-1" />
-        🎁 PROMO : Kit Ventre Plat Nourrice à 15 000 F au lieu de 20 000 F &nbsp;|&nbsp; 3 paquets Tisane & Thé à 10 000 F &nbsp;|&nbsp; Livraison Abidjan dès 1 000 F CFA
+        <Tag className="w-3.5 h-3.5" />
+        <span>🎁 PROMO : Kit Ventre Plat Nourrice à 15 000 F au lieu de 20 000 F ! Expire dans :</span>
+        <span className="font-mono bg-black/20 px-2 py-0.5 rounded text-glow">{promoCountdown}</span>
       </div>
 
       {/* ====== HEADER SECTION ====== */}
       <div className="border-b" style={{ borderColor: "var(--color-theme-border)" }}>
-        <div className="max-w-7xl mx-auto px-6 py-14 space-y-6">
-          <ScrollReveal animation="fade-up">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-3 h-3" style={{ color: "var(--color-theme-accent)" }} />
-              <span className="text-[9px] font-bold tracking-[0.3em] uppercase" style={{ color: "var(--color-theme-accent)" }}>
-                Boutique Officielle
-              </span>
-            </div>
-            <h1 className="font-sans text-4xl sm:text-6xl font-black uppercase tracking-tighter"
-              style={{ color: "var(--color-theme-fg)" }}>
-              La Boutique<br />
-              <span style={{ color: "var(--color-theme-accent)" }}>Caroana Minceur</span>
-            </h1>
-            <p className="text-xs max-w-xl leading-relaxed mt-3" style={{ color: "var(--color-theme-muted)" }}>
-              Produits individuels, packs synergiques et promotions — Toutes nos formules sont issues de plantes africaines sélectionnées à la source.
-            </p>
-          </ScrollReveal>
+        <div className="max-w-7xl mx-auto px-6 py-10 space-y-6">
+          
+          {/* Dispatch Countdown Alert (Amélioration 48) */}
+          <div className="p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold bg-emerald-500/5" style={{ borderColor: "rgba(16,185,129,0.2)" }}>
+            <span className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-emerald-500 animate-bounce" />
+              <span>Commandez dans les <strong className="font-mono text-emerald-600 dark:text-emerald-400">{dispatchTime}</strong> pour une expédition aujourd'hui !</span>
+            </span>
+            <span className="hidden sm:inline opacity-60">Livraison Abidjan Express dispo</span>
+          </div>
 
-          {/* Search bar */}
-          <ScrollReveal animation="fade-up" delay={100}>
-            <div className="relative max-w-md">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <ScrollReveal animation="fade-up">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-3 h-3" style={{ color: "var(--color-theme-accent)" }} />
+                <span className="text-[9px] font-bold tracking-[0.3em] uppercase" style={{ color: "var(--color-theme-accent)" }}>
+                  Boutique Officielle
+                </span>
+              </div>
+              <h1 className="font-sans text-3xl sm:text-5xl font-black uppercase tracking-tighter" style={{ color: "var(--color-theme-fg)" }}>
+                La Boutique<br />
+                <span style={{ color: "var(--color-theme-accent)" }}>Caroana Minceur</span>
+              </h1>
+            </ScrollReveal>
+
+            {/* Interactive Coupon Code card (Amélioration 16, 34) */}
+            <div 
+              onClick={handleCopyCode}
+              className="p-3 border rounded-xl flex items-center justify-between gap-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-all select-none shadow-sm"
+              style={{ borderColor: "var(--color-theme-border)", background: "var(--color-theme-card)" }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-yellow-500/10 text-yellow-600">
+                  <Tag className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider block opacity-50">Coupon de bienvenue</span>
+                  <span className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400">CAROANA10</span>
+                </div>
+              </div>
+              <button className="p-1.5 rounded-lg border hover:bg-neutral-100 transition-colors">
+                {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 opacity-60" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Search bar & Sorting Dropdown (Amélioration 18) */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full sm:max-w-md">
               <input
                 type="text"
                 placeholder="Rechercher un produit ou un pack..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-4 pr-10 py-3 border rounded-lg text-sm focus:outline-none transition-all"
+                className="w-full pl-4 pr-10 py-2.5 border rounded-lg text-xs focus:outline-none transition-all"
                 style={{
                   background: "var(--color-theme-card)",
                   borderColor: "var(--color-theme-border)",
                   color: "var(--color-theme-fg)",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--color-theme-accent)")}
-                onBlur={(e) => (e.target.style.borderColor = "var(--color-theme-border)")}
               />
             </div>
-          </ScrollReveal>
+
+            <div className="flex gap-2 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-1 px-3 py-2 border rounded-lg text-xs bg-theme-card" style={{ borderColor: "var(--color-theme-border)" }}>
+                <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as any)}
+                  className="bg-transparent text-xs font-bold focus:outline-none border-none cursor-pointer outline-none"
+                >
+                  <option value="default" className="text-black">Recommandé</option>
+                  <option value="price-asc" className="text-black">Prix : Croissant</option>
+                  <option value="price-desc" className="text-black">Prix : Décroissant</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
           {/* Category tabs */}
           <ScrollReveal animation="fade-up" delay={150}>
@@ -426,7 +578,32 @@ export default function BoutiquePage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-16 space-y-24">
+      <div className="max-w-7xl mx-auto px-6 py-10 space-y-20">
+
+        {/* ====== COMPONENT: PRODUCT COMPARATOR BANNER (Amélioration 15) ====== */}
+        {compareList.length > 0 && (
+          <div className="fixed bottom-6 left-6 z-40 bg-theme-card border shadow-2xl p-4 rounded-2xl max-w-sm flex items-center justify-between gap-4 animate-slide-in-left" style={{ borderColor: "var(--color-theme-accent)" }}>
+            <div>
+              <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Comparateur</span>
+              <p className="text-xs font-bold mt-0.5">{compareList.length} produit{compareList.length > 1 ? "s" : ""} sélectionné{compareList.length > 1 ? "s" : ""}</p>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCompareList([])}
+                className="p-2 border rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                style={{ borderColor: "var(--color-theme-border)" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setIsCompareOpen(true)}
+                className="px-4 py-2 rounded-xl text-xs font-black text-white uppercase tracking-wider bg-theme-accent hover:scale-102 transition-transform cursor-pointer"
+              >
+                Comparer
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ====== PRODUITS INDIVIDUELS ====== */}
         {showSolo && filteredProduits.length > 0 && (
@@ -437,305 +614,294 @@ export default function BoutiquePage() {
                 <div className="flex items-center gap-2">
                   <Package className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
                   <h2 className="text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--color-theme-accent)" }}>
-                    Produits Individuels
+                    Produits Individuels ({filteredProduits.length})
                   </h2>
                 </div>
                 <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
               </div>
             </ScrollReveal>
 
-            {/* Gélules Kaylie + Skinny — Highlight */}
-            {(activeTab === "all" || activeTab === "solo" || activeTab === "capsules") && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                {[PRODUITS[1]!, PRODUITS[2]!].map((p, idx) => (
-                  <ScrollReveal key={p.id} animation="fade-up" delay={idx * 100}>
-                    <div
-                      className="relative rounded-xl p-6 border hover-gold-sheen glow-on-hover transition-all duration-500 overflow-hidden"
-                      style={{
-                        background: `linear-gradient(135deg, rgba(var(--color-theme-accent-rgb), 0.06) 0%, var(--color-theme-card) 100%)`,
-                        borderColor: "rgba(var(--color-theme-accent-rgb), 0.3)",
-                      }}
-                    >
-                      {/* Badge */}
-                      <div className="flex items-center justify-between mb-4">
-                        <span className="text-lg">{p.icon}</span>
-                        <span
-                          className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded"
-                          style={{ background: "var(--color-theme-accent)", color: "var(--color-theme-bg)" }}
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProduits.map((p, idx) => {
+                const inWishlist = wishlist.includes(p.id);
+                const isComparing = compareList.some(item => item.id === p.id);
+                const stockLeftPercent = Math.max(10, (p.stock / 40) * 100);
+
+                return (
+                  <ScrollReveal key={p.id} animation="fade-up" delay={idx * 50}>
+                    <div className="border rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full bg-theme-card relative group" style={{ borderColor: "var(--color-theme-border)" }}>
+                      
+                      {/* Thumbnail frame */}
+                      <div className="aspect-square w-full relative bg-stone-100/50 dark:bg-neutral-900/50 overflow-hidden">
+                        <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-all duration-500" />
+                        
+                        {/* Wishlist toggle (Amélioration 3, 42) */}
+                        <button
+                          onClick={() => toggleWishlist(p.id)}
+                          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-white/80 dark:bg-black/60 shadow backdrop-blur-sm transition-transform cursor-pointer active:scale-90"
                         >
-                          {p.badge}
-                        </span>
+                          <Heart className={`w-4 h-4 transition-colors ${inWishlist ? "fill-red-500 stroke-red-500 text-red-500" : "text-neutral-500 dark:text-neutral-300"}`} />
+                        </button>
+
+                        {/* Comparator check (Amélioration 15, 37) */}
+                        <button
+                          onClick={() => toggleCompare(p)}
+                          className="absolute bottom-3 left-3 px-2 py-1.5 rounded-lg flex items-center gap-1 bg-white/90 dark:bg-black/80 shadow backdrop-blur-sm text-[9px] font-bold uppercase tracking-wider cursor-pointer"
+                        >
+                          <Scale className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>{isComparing ? "Sélectionné" : "Comparer"}</span>
+                        </button>
+
+                        {p.badge && (
+                          <div className="absolute top-3 left-3 bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest px-2 py-1 rounded">
+                            {p.badge}
+                          </div>
+                        )}
                       </div>
 
-                      <h3 className="font-serif text-xl font-black mb-1" style={{ color: "var(--color-theme-fg)" }}>{p.name}</h3>
-                      <p className="text-[11px] mb-2" style={{ color: "var(--color-theme-muted)" }}>{p.shortDescription}</p>
-                      {p.detail && (
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold mb-4" style={{ color: "var(--color-theme-accent)" }}>
-                          <Clock className="w-3 h-3" />
-                          <span>{p.detail}</span>
+                      {/* Content panel */}
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                        <div>
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-serif text-base font-bold leading-snug">{p.name}</h3>
+                            <span className="font-mono text-sm font-black text-emerald-600 dark:text-emerald-400">
+                              {p.price.toLocaleString("fr-FR")} F
+                            </span>
+                          </div>
+                          
+                          <p className="text-[11px] opacity-75 mt-1.5 leading-relaxed h-12 overflow-hidden text-ellipsis">
+                            {p.shortDescription}
+                          </p>
+
+                          {/* Urgency Stock Gauge (Amélioration 11, 16) */}
+                          <div className="mt-3 pt-2">
+                            <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider mb-1">
+                              {p.stock <= 5 ? (
+                                <span className="text-red-500 dark:text-red-400 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3 animate-pulse" />
+                                  Plus que {p.stock} en stock !
+                                </span>
+                              ) : (
+                                <span className="opacity-40">Stock Disponible</span>
+                              )}
+                              <span className="opacity-40">{p.stock} pces</span>
+                            </div>
+                            <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all duration-300 ${p.stock <= 5 ? "bg-red-500" : "bg-emerald-500"}`}
+                                style={{ width: `${stockLeftPercent}%` }}
+                              />
+                            </div>
+                          </div>
                         </div>
-                      )}
 
-                      <div className="flex items-center justify-between mt-auto pt-4 border-t"
-                        style={{ borderColor: "var(--color-theme-border)" }}>
-                        <span className="text-2xl font-black font-mono" style={{ color: "var(--color-theme-accent)", textShadow: "0 0 15px rgba(var(--color-theme-accent-rgb), 0.4)" }}>
-                          {p.price.toLocaleString("fr-FR")} F
-                        </span>
-                        <a
-                          href={getWhatsAppLink(p.name, p.price)}
-                          target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 px-4 py-2 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
-                          style={{ background: "#25D366", color: "#fff" }}
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          Commander
-                        </a>
+                        {/* Add to Cart Actions */}
+                        <div className="flex items-center gap-2 border-t pt-3" style={{ borderColor: "var(--color-theme-border)" }}>
+                          <Link
+                            href={`/produit/${p.slug}`}
+                            className="flex-1 text-center py-2 border rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900"
+                            style={{ borderColor: "var(--color-theme-border)" }}
+                          >
+                            Détails
+                          </Link>
+
+                          {/* Quick Add (Amélioration 12) */}
+                          <button
+                            onClick={() => handleQuickAdd(p)}
+                            className="px-3.5 py-2.5 rounded-xl font-bold text-xs bg-theme-accent text-theme-bg hover:scale-102 cursor-pointer transition-transform flex items-center justify-center gap-1.5"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
+
                     </div>
                   </ScrollReveal>
-                ))}
-              </div>
-            )}
-
-            {/* Autres produits */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProduits.filter(p => p.id !== "p-kaylie" && p.id !== "p-skinny").map((p, idx) => (
-                <ScrollReveal key={p.id} animation="fade-up" delay={(idx % 4) * 80}>
-                  <div
-                    className="relative rounded-xl p-5 border flex flex-col gap-4 hover-gold-sheen glow-on-hover transition-all duration-500"
-                    style={{
-                      background: "var(--color-theme-card)",
-                      borderColor: "var(--color-theme-border)",
-                    }}
-                  >
-                    <div className="aspect-video rounded-lg overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.image} alt={p.name} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-smooth" />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span>{p.icon}</span>
-                        <h3 className="font-serif font-bold text-sm" style={{ color: "var(--color-theme-fg)" }}>{p.name}</h3>
-                      </div>
-                      <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-theme-muted)" }}>{p.shortDescription}</p>
-                    </div>
-
-                    <div className="mt-auto pt-3 border-t flex items-center justify-between gap-2"
-                      style={{ borderColor: "var(--color-theme-border)" }}>
-                      <span className="text-base font-black font-mono" style={{ color: "var(--color-theme-accent)" }}>
-                        {p.price.toLocaleString("fr-FR")} F
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => addItem({ productId: p.id, variantId: null, sku: p.sku, name: p.name, price: p.price, imageUrl: p.image })}
-                          className="p-2 border rounded transition-all cursor-pointer"
-                          style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}
-                          title="Ajouter au panier"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                        </button>
-                        <a
-                          href={getWhatsAppLink(p.name, p.price)}
-                          target="_blank" rel="noopener noreferrer"
-                          className="p-2 rounded transition-all cursor-pointer"
-                          style={{ background: "#25D366", color: "#fff" }}
-                          title="Commander WhatsApp"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
 
-        {/* ====== PROMOTION SPECIALE ====== */}
-        {(activeTab === "all" || activeTab === "packs") && (
-          <section className="space-y-8">
-            <ScrollReveal animation="scale-up">
-              <div
-                className="relative rounded-2xl p-8 sm:p-12 overflow-hidden border"
-                style={{
-                  background: "linear-gradient(135deg, rgba(var(--color-theme-accent-rgb), 0.1) 0%, var(--color-theme-card) 60%)",
-                  borderColor: "rgba(var(--color-theme-accent-rgb), 0.35)",
-                }}
-              >
-                {/* Glow orb */}
-                <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
-                  style={{ background: "radial-gradient(circle, rgba(var(--color-theme-accent-rgb), 0.15) 0%, transparent 70%)", filter: "blur(40px)" }} />
-
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
-                      <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: "var(--color-theme-accent)" }}>
-                        Promotion Exclusive
-                      </span>
-                    </div>
-                    <h2 className="font-sans text-2xl sm:text-4xl font-black uppercase tracking-tight" style={{ color: "var(--color-theme-fg)" }}>
-                      Tisane & Thé Détox<br />
-                      <span style={{ color: "var(--color-theme-accent)" }}>3 paquets à 10 000 F</span>
-                    </h2>
-                    <p className="text-sm" style={{ color: "var(--color-theme-muted)" }}>
-                      Au lieu de <s>15 000 F CFA</s> — Économisez <strong style={{ color: "var(--color-theme-accent)" }}>5 000 F CFA</strong>
-                    </p>
-                    <div className="flex items-center gap-2 text-[10px] font-bold" style={{ color: "var(--color-theme-accent)" }}>
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Offre limitée · Stock disponible</span>
-                    </div>
-                  </div>
-                  <a
-                    href={getWhatsAppLink("Promotion Tisane + Thé Détox (3 paquets)", 10000)}
-                    target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-8 py-4 rounded-lg font-black text-sm uppercase tracking-widest transition-all btn-accent flex-shrink-0"
-                  >
-                    <span>Profiter de l&apos;offre</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
+        {/* ====== COMPONENT: PRODUCTS COMPARATOR MODAL (Amélioration 15) ====== */}
+        {isCompareOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsCompareOpen(false)} />
+            
+            <div className="bg-theme-card border rounded-3xl w-full max-w-4xl p-6 relative z-10 shadow-2xl max-h-[90vh] overflow-y-auto" style={{ borderColor: "var(--color-theme-border)" }}>
+              <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: "var(--color-theme-border)" }}>
+                <h3 className="font-serif text-xl font-black uppercase tracking-wider">Comparatif de nos cures minceur</h3>
+                <button 
+                  onClick={() => setIsCompareOpen(false)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </ScrollReveal>
-          </section>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {compareList.map((prod) => (
+                  <div key={prod.id} className="p-4 border rounded-2xl flex flex-col justify-between space-y-4" style={{ borderColor: "var(--color-theme-border)" }}>
+                    <div className="space-y-3">
+                      <div className="aspect-video w-full rounded-lg overflow-hidden bg-neutral-100">
+                        <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
+                      </div>
+                      <h4 className="font-serif text-base font-bold">{prod.name}</h4>
+                      <strong className="text-emerald-500 font-mono text-sm block">{prod.price.toLocaleString("fr-FR")} FCFA</strong>
+                      
+                      <div className="space-y-2 border-t pt-3 text-[11px]" style={{ borderColor: "var(--color-theme-border)" }}>
+                        <div>
+                          <strong className="opacity-50 uppercase tracking-wider text-[9px] block">Cible</strong>
+                          <p className="font-medium mt-0.5">{prod.shortDescription}</p>
+                        </div>
+                        <div>
+                          <strong className="opacity-50 uppercase tracking-wider text-[9px] block">Format</strong>
+                          <p className="font-medium mt-0.5">{prod.productType === "capsules" ? "💊 Gélules" : "🌿 Tisane/Infusion"}</p>
+                        </div>
+                        <div>
+                          <strong className="opacity-50 uppercase tracking-wider text-[9px] block">Disponibilité</strong>
+                          <p className="font-medium mt-0.5 text-emerald-600 dark:text-emerald-400">{prod.stock} unités restantes</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        handleQuickAdd(prod);
+                        setIsCompareOpen(false);
+                      }}
+                      className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-theme-accent text-theme-bg text-center cursor-pointer"
+                    >
+                      Ajouter au panier
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* ====== PACKS & DUOS ====== */}
+        {/* ====== CURES SYNERGIQUES (PACKS) ====== */}
         {showPacks && filteredPacks.length > 0 && (
           <section className="space-y-10">
             <ScrollReveal animation="fade-up">
               <div className="flex items-center gap-4">
                 <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
                 <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
+                  <Package className="w-4 h-4" style={{ color: "var(--color-theme-accent)" }} />
                   <h2 className="text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--color-theme-accent)" }}>
-                    Packs & Synergies
+                    Cures Synergiques & Packs
                   </h2>
                 </div>
                 <div className="h-px flex-1" style={{ background: "var(--color-theme-border)" }} />
               </div>
             </ScrollReveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredPacks.map((pack, idx) => (
-                <ScrollReveal key={pack.id} animation="fade-up" delay={(idx % 3) * 100}>
+                <ScrollReveal key={pack.id} animation="fade-up" delay={idx * 100}>
                   <div
-                    className={`relative rounded-xl p-6 border flex flex-col gap-4 hover-gold-sheen transition-all duration-500 overflow-hidden ${pack.featured ? "glow-on-hover" : ""}`}
-                    style={{
-                      background: pack.featured
-                        ? `linear-gradient(135deg, rgba(var(--color-theme-accent-rgb), 0.08) 0%, var(--color-theme-card) 100%)`
-                        : "var(--color-theme-card)",
-                      borderColor: pack.featured ? "rgba(var(--color-theme-accent-rgb), 0.3)" : "var(--color-theme-border)",
-                    }}
+                    className="rounded-2xl border p-6 flex flex-col md:flex-row justify-between gap-6 hover:shadow-xl transition-all duration-300 relative overflow-hidden bg-theme-card"
+                    style={{ borderColor: "var(--color-theme-border)" }}
                   >
-                    {pack.featured && (
-                      <div
-                        className="absolute top-3 right-3 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
-                        style={{ background: "var(--color-theme-accent)", color: "var(--color-theme-bg)" }}
-                      >
-                        ⭐ Populaire
-                      </div>
-                    )}
+                    {/* Inner color glow */}
+                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-[40px] opacity-10 bg-gradient-to-br ${pack.color}`} />
 
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">{pack.icon}</span>
+                    {/* Left: Pack Info */}
+                    <div className="flex-1 flex flex-col justify-between space-y-4">
                       <div>
-                        <h3 className="font-serif font-black text-sm leading-tight" style={{ color: "var(--color-theme-fg)" }}>{pack.name}</h3>
-                        <p className="text-[10px] mt-0.5" style={{ color: "var(--color-theme-muted)" }}>{pack.shortDescription}</p>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xl">{pack.icon}</span>
+                          {pack.saving > 0 && (
+                            <span className="bg-red-500 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded">
+                              Économie: {pack.saving.toLocaleString("fr-FR")} F
+                            </span>
+                          )}
+                          {pack.badge && (
+                            <span className="bg-emerald-600 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded">
+                              {pack.badge}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-serif text-lg font-black">{pack.name}</h3>
+                        <p className="text-[11px] opacity-75 mt-1">{pack.shortDescription}</p>
+
+                        <div className="space-y-1.5 mt-3 border-t pt-3" style={{ borderColor: "var(--color-theme-border)" }}>
+                          <span className="text-[9px] font-bold opacity-45 uppercase tracking-wider block">Ce que comprend ce pack :</span>
+                          <ul className="space-y-1">
+                            {pack.items.map((it, k) => (
+                              <li key={k} className="text-[10px] flex items-center gap-1.5">
+                                <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                                <span className="opacity-85">{it}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Pricing */}
+                      <div className="flex items-end gap-3 pt-2">
+                        <div className="flex flex-col">
+                          <span className="text-[8px] font-bold uppercase tracking-wider opacity-40">Prix total</span>
+                          <div className="flex items-baseline gap-2">
+                            <strong className="text-xl font-mono text-emerald-600 dark:text-emerald-400">
+                              {pack.price.toLocaleString("fr-FR")} F
+                            </strong>
+                            {pack.compareAtPrice && pack.compareAtPrice > pack.price && (
+                              <span className="text-xs line-through opacity-40 font-mono">
+                                {pack.compareAtPrice.toLocaleString("fr-FR")} F
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Items list */}
-                    <ul className="space-y-1.5">
-                      {pack.items.map((item, i) => (
-                        <li key={i} className="flex items-center gap-2 text-[10px]" style={{ color: "var(--color-theme-muted)" }}>
-                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--color-theme-accent)" }} />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* Price */}
-                    <div className="mt-auto pt-4 border-t space-y-3" style={{ borderColor: "var(--color-theme-border)" }}>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-black font-mono" style={{ color: "var(--color-theme-accent)" }}>
-                          {pack.price.toLocaleString("fr-FR")} F CFA
-                        </span>
-                        {pack.saving > 0 && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(var(--color-theme-accent-rgb), 0.15)", color: "var(--color-theme-accent)" }}>
-                            −{pack.saving.toLocaleString("fr-FR")} F économisés
-                          </span>
-                        )}
+                    {/* Right: Actions */}
+                    <div className="md:w-1/3 flex flex-col justify-between items-center md:items-end">
+                      <div className="w-full aspect-square md:w-28 md:h-28 rounded-xl overflow-hidden bg-neutral-100">
+                        <img src={pack.image} alt={pack.name} className="w-full h-full object-cover" />
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-row md:flex-col gap-2 w-full mt-4 md:mt-0">
+                        {/* Quick Add */}
                         <button
-                          onClick={() => addItem({
-                            productId: pack.id, variantId: null,
-                            sku: pack.id.toUpperCase(), name: pack.name,
-                            price: pack.price, imageUrl: pack.image
-                          })}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border rounded text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
-                          style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}
+                          onClick={() => {
+                            addItem({
+                              productId: pack.id,
+                              variantId: null,
+                              sku: "PK-NEW",
+                              name: pack.name,
+                              price: pack.price,
+                              imageUrl: pack.image,
+                              quantity: 1
+                            });
+                            alert(`« ${pack.name} » a été ajouté à votre panier !`);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-wider text-center text-white cursor-pointer"
+                          style={{ background: "var(--color-theme-accent)" }}
                         >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          Panier
+                          Ajouter au Panier
                         </button>
                         <a
                           href={getWhatsAppLink(pack.name, pack.price)}
                           target="_blank" rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all"
-                          style={{ background: "#25D366", color: "#fff" }}
+                          className="flex items-center justify-center gap-1 px-3 py-2 border rounded-xl text-[9px] font-bold uppercase tracking-wider text-center text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/5 transition-colors"
                         >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          WhatsApp
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+                          Commander
                         </a>
                       </div>
                     </div>
+
                   </div>
                 </ScrollReveal>
               ))}
             </div>
           </section>
         )}
-
-        {/* ====== LIVRAISON INFO ====== */}
-        <ScrollReveal animation="scale-up">
-          <div
-            className="rounded-xl p-8 border"
-            style={{ background: "var(--color-theme-card)", borderColor: "var(--color-theme-border)" }}
-          >
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-lg">🚚</span>
-              <h3 className="font-sans font-black text-sm uppercase tracking-widest" style={{ color: "var(--color-theme-fg)" }}>
-                Frais de Livraison
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {LIVRAISON.map((z) => (
-                <div
-                  key={z.zone}
-                  className="flex items-center justify-between p-4 rounded-lg border"
-                  style={{ borderColor: "var(--color-theme-border)", background: "var(--color-theme-surface, rgba(var(--color-theme-accent-rgb), 0.02))" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{z.icon}</span>
-                    <span className="text-xs font-bold" style={{ color: "var(--color-theme-fg)" }}>{z.zone}</span>
-                  </div>
-                  <span className="text-sm font-black font-mono" style={{ color: "var(--color-theme-accent)" }}>{z.tarif}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] mt-4 text-center" style={{ color: "var(--color-theme-muted)" }}>
-              Paiement à la livraison disponible · WhatsApp :{" "}
-              <a href="https://wa.me/2250143655088" className="font-bold" style={{ color: "var(--color-theme-accent)" }}>
-                +225 01 43 65 50 88
-              </a>
-            </p>
-          </div>
-        </ScrollReveal>
 
       </div>
     </div>
