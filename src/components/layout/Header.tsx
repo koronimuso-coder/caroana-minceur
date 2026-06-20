@@ -33,6 +33,7 @@ export default function Header() {
   const navLinks = [
     { name: "Accueil", href: "/", emoji: "🏠" },
     { name: "Boutique", href: "/boutique", emoji: "🛍️" },
+    { name: "Bilan Minceur", href: "/bilan-minceur", emoji: "📋" },
     { name: "Rituel Infusion", href: "/rituel-timer", emoji: "⏱️" },
     { name: "Suivi Commande", href: "/suivi-commande", emoji: "📦" },
     { name: "À Propos", href: "/a-propos", emoji: "🌿" },

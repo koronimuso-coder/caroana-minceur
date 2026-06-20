@@ -17,6 +17,7 @@ export default function Footer() {
 
   const infoLinks = [
     { name: "À Propos de Caroana", href: "/a-propos" },
+    { name: "Bilan Minceur 🌿", href: "/bilan-minceur" },
     { name: "Minuteur d'Infusion ⏱️", href: "/rituel-timer" },
     { name: "Suivre ma Commande 📦", href: "/suivi-commande" },
     { name: "FAQ — Questions fréquentes", href: "/#faq" },
