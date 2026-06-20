@@ -16,6 +16,12 @@ const LOCAL_PRODUCTS: Record<string, { price: number; name: string; sku: string;
   "p-tisane-m": { price: 8000, name: "Tisane Minceur", sku: "TM-01", stock: 100 },
   "produit-minceur": { price: 8000, name: "Produit Minceur", sku: "PM-01", stock: 60 },
   "p-produit-m": { price: 8000, name: "Produit Minceur", sku: "PM-01", stock: 60 },
+  "p-gelules-nourrice": { price: 10000, name: "Gélules Ventre Plat Nourrice", sku: "GVPN-01", stock: 100 },
+  "gelules-ventre-plat-nourrice": { price: 10000, name: "Gélules Ventre Plat Nourrice", sku: "GVPN-01", stock: 100 },
+  "p-caolin-nourrice": { price: 5000, name: "Caolin Ventre Plat Nourrice", sku: "CVPN-01", stock: 100 },
+  "caolin-ventre-plat-nourrice": { price: 5000, name: "Caolin Ventre Plat Nourrice", sku: "CVPN-01", stock: 100 },
+  "p-tisane-nourrice": { price: 5000, name: "Tisane Ventre Plat Nourrice", sku: "TVPN-01", stock: 100 },
+  "tisane-ventre-plat-nourrice": { price: 5000, name: "Tisane Ventre Plat Nourrice", sku: "TVPN-01", stock: 100 },
 };
 
 const LOCAL_PACKS: Record<string, { price: number; name: string; sku: string }> = {
@@ -27,6 +33,11 @@ const LOCAL_PACKS: Record<string, { price: number; name: string; sku: string }> 
   "pack-6": { price: 33000, name: "Pack Gélules Kaylie + Tisane Minceur", sku: "PK-06" },
   "pack-7": { price: 20000, name: "Pack Gélules Skinny + Thé Détox", sku: "PK-07" },
   "pack-8": { price: 23000, name: "Pack Gélules Skinny + Tisane Minceur", sku: "PK-08" },
+  "pack-nourrice-1": { price: 14000, name: "Pack Gélules Nourrice + Caolin Nourrice", sku: "PKN-01" },
+  "pack-nourrice-2": { price: 14000, name: "Pack Gélules Nourrice + Tisane Nourrice", sku: "PKN-02" },
+  "pack-nourrice-3": { price: 10000, name: "Pack Caolin Nourrice + Tisane Nourrice", sku: "PKN-03" },
+  "pack-nourrice-4": { price: 20000, name: "Pack Complet 3 Produits Nourrice", sku: "PKN-04" },
+  "pack-nourrice-kit": { price: 15000, name: "Kit Ventre Plat Nourrice (Promo)", sku: "PKN-KIT" },
 };
 
 const LOCAL_SHIPPING_ZONES: Record<string, number> = {

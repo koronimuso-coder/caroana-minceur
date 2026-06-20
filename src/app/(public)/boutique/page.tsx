@@ -89,6 +89,39 @@ const PRODUITS = [
     image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
     stock: 60,
   },
+  {
+    id: "p-gelules-nourrice", slug: "gelules-ventre-plat-nourrice", sku: "GVPN-01",
+    name: "Gélules Ventre Plat Nourrice",
+    shortDescription: "Formule post-partum et allaitement pour affiner la sangle abdominale.",
+    productType: "capsules",
+    price: 10000, compareAtPrice: null,
+    badge: "🍼 Allaitement", promo: false,
+    icon: "💊",
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
+  {
+    id: "p-caolin-nourrice", slug: "caolin-ventre-plat-nourrice", sku: "CVPN-01",
+    name: "Caolin Ventre Plat Nourrice",
+    shortDescription: "Soin traditionnel purifié pour raffermir le ventre des nouvelles mamans.",
+    productType: "supplement",
+    price: 5000, compareAtPrice: null,
+    badge: "🍼 Allaitement", promo: false,
+    icon: "🫙",
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
+  {
+    id: "p-tisane-nourrice", slug: "tisane-ventre-plat-nourrice", sku: "TVPN-01",
+    name: "Tisane Ventre Plat Nourrice",
+    shortDescription: "Infusion douce favorisant le transit et le ventre plat post-grossesse.",
+    productType: "herbal_tea",
+    price: 5000, compareAtPrice: null,
+    badge: "🍼 Allaitement", promo: false,
+    icon: "🌿",
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+    stock: 100,
+  },
 ];
 
 // =====================================================================
@@ -207,6 +240,63 @@ const PACKS = [
     saving: 0,
     image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
   },
+  {
+    id: "pack-nourrice-1", slug: "pack-gelules-caolin-nourrice",
+    name: "Pack Gélules Nourrice + Caolin",
+    shortDescription: "Duo Ventre Plat Nourrice & Maman",
+    price: 14000, compareAtPrice: 15000,
+    icon: "🍼",
+    color: "from-emerald-500/10 to-teal-700/5",
+    items: ["Gélules Nourrice (10 000 F)", "Caolin Nourrice (5 000 F)"],
+    saving: 1000,
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-nourrice-2", slug: "pack-gelules-tisane-nourrice",
+    name: "Pack Gélules Nourrice + Tisane",
+    shortDescription: "Duo Ventre Plat & Transit Doux",
+    price: 14000, compareAtPrice: 15000,
+    icon: "🍼",
+    color: "from-emerald-500/10 to-emerald-700/5",
+    items: ["Gélules Nourrice (10 000 F)", "Tisane Nourrice (5 000 F)"],
+    saving: 1000,
+    image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-nourrice-3", slug: "pack-caolin-tisane-nourrice",
+    name: "Pack Caolin Nourrice + Tisane",
+    shortDescription: "Duo Drainage & Fermeté",
+    price: 10000, compareAtPrice: 10000,
+    icon: "🍼",
+    color: "from-amber-500/10 to-emerald-700/5",
+    items: ["Caolin Nourrice (5 000 F)", "Tisane Nourrice (5 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-nourrice-4", slug: "pack-complet-nourrice",
+    name: "Pack Complet Nourrice",
+    shortDescription: "Le pack complet 3 produits Ventre Plat Nourrice",
+    price: 20000, compareAtPrice: 20000,
+    icon: "⭐",
+    color: "from-yellow-500/10 to-amber-700/5",
+    items: ["Gélules Nourrice (10 000 F)", "Caolin Nourrice (5 000 F)", "Tisane Nourrice (5 000 F)"],
+    saving: 0,
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+  },
+  {
+    id: "pack-nourrice-kit", slug: "kit-ventre-plat-nourrice",
+    name: "Kit Ventre Plat Nourrice",
+    shortDescription: "Promotion spéciale : Kit Ventre Plat complet pour Maman",
+    price: 15000, compareAtPrice: 20000,
+    icon: "🎁",
+    color: "from-red-500/10 to-amber-700/5",
+    items: ["Gélules Nourrice (10 000 F)", "Caolin Nourrice (5 000 F)", "Tisane Nourrice (5 000 F)"],
+    saving: 5000,
+    image: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    featured: true,
+    badge: "🍼 Allaitement",
+  },
 ];
 
 // =====================================================================
@@ -271,7 +361,7 @@ export default function BoutiquePage() {
         }}
       >
         <Tag className="inline w-3 h-3 mr-1" />
-        🎁 PROMO : Tisane Ventre Plat & Thé Détox — 3 paquets à 10 000 F au lieu de 15 000 F &nbsp;|&nbsp; Livraison Abidjan dès 1 000 F CFA
+        🎁 PROMO : Kit Ventre Plat Nourrice à 15 000 F au lieu de 20 000 F &nbsp;|&nbsp; 3 paquets Tisane & Thé à 10 000 F &nbsp;|&nbsp; Livraison Abidjan dès 1 000 F CFA
       </div>
 
       {/* ====== HEADER SECTION ====== */}
