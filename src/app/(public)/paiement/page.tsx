@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/hooks/useCart";
 import { checkoutSchema } from "@/schemas";
 import { processCheckout } from "@/server/actions/checkout.action";
-import { ShieldCheck, MessageCircle, Wallet, CreditCard, Landmark } from "lucide-react";
+import { ShieldCheck, MessageCircle, Wallet, CreditCard, Landmark, Loader2, CheckCircle2, QrCode, Smartphone, X } from "lucide-react";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +17,11 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [paymentMethod, setPaymentMethod] = useState<any>("ManualPaymentProvider");
+
+  const [showSimulationModal, setShowSimulationModal] = useState(false);
+  const [simulatedProgress, setSimulatedProgress] = useState(0);
+  const [simulationStatus, setSimulationStatus] = useState<"verifying" | "success" | "idle">("idle");
+  const [pendingOrderData, setPendingOrderData] = useState<any>(null);
 
   const {
     register,
@@ -79,26 +84,11 @@ export default function CheckoutPage() {
     loadTotals();
   }, [items, router]);
 
-  const onSubmit = async (data: any) => {
+  const finalizeOrder = async (orderData: any) => {
     setLoading(true);
     setError(null);
     try {
-      const orderInput = {
-        ...data,
-        items: items.map((it) => ({
-          productId: it.productId,
-          variantId: it.variantId,
-          quantity: it.quantity,
-        })),
-        paymentMethod,
-        // Mock proof URL for Manual Payment
-        paymentDetails: {
-          method: paymentMethod === "ManualPaymentProvider" ? "wave" : "cash",
-          proofUrl: paymentMethod === "ManualPaymentProvider" ? "https://mock-storage-proof.pdf" : null,
-        },
-      };
-
-      const result = await processCheckout(null, orderInput);
+      const result = await processCheckout(null, orderData);
       if (result.success) {
         clearCart();
         if (result.redirectUrl) {
@@ -108,13 +98,68 @@ export default function CheckoutPage() {
         }
       } else {
         setError("La commande a échoué.");
+        setShowSimulationModal(false);
       }
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue lors de la commande.");
+      setShowSimulationModal(false);
     } finally {
       setLoading(false);
     }
   };
+
+  const onSubmit = async (data: any) => {
+    setError(null);
+    const orderInput = {
+      ...data,
+      items: items.map((it) => ({
+        productId: it.productId,
+        variantId: it.variantId,
+        quantity: it.quantity,
+      })),
+      paymentMethod,
+      paymentDetails: {
+        method: paymentMethod === "ManualPaymentProvider" ? "wave" : "cash",
+        proofUrl: paymentMethod === "ManualPaymentProvider" ? "https://mock-storage-proof.pdf" : null,
+      },
+    };
+
+    if (paymentMethod === "ManualPaymentProvider") {
+      setPendingOrderData(orderInput);
+      setShowSimulationModal(true);
+      setSimulationStatus("verifying");
+      setSimulatedProgress(0);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await finalizeOrder(orderInput);
+    } catch (err: any) {
+      setError(err.message || "Une erreur est survenue.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showSimulationModal && simulationStatus === "verifying") {
+      timer = setInterval(() => {
+        setSimulatedProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            setSimulationStatus("success");
+            setTimeout(() => {
+              finalizeOrder(pendingOrderData);
+            }, 1000);
+            return 100;
+          }
+          return prev + 20;
+        });
+      }, 800);
+    }
+    return () => clearInterval(timer);
+  }, [showSimulationModal, simulationStatus, pendingOrderData]);
 
   if (items.length === 0) return null;
 
@@ -383,6 +428,86 @@ export default function CheckoutPage() {
           </div>
         </form>
       </div>
+
+      {/* Simulation Modal for Wave / Mobile Money Payments */}
+      {showSimulationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
+          <div className="relative w-full max-w-md rounded-2xl p-6 border shadow-2xl space-y-6 animate-scale-up" style={{ background: "var(--color-theme-card)", borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}>
+            
+            {/* Header */}
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#25D366]">Wave & Mobile Money</span>
+                <h3 className="text-lg font-black uppercase tracking-tight">Vérification de Paiement</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSimulationModal(false);
+                  setLoading(false);
+                }}
+                className="w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer transition-all hover:bg-theme-fg/5"
+                style={{ borderColor: "var(--color-theme-border)" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Simulated status content */}
+            {simulationStatus === "verifying" ? (
+              <div className="space-y-4 text-center py-4">
+                <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
+                  <Loader2 className="w-10 h-10 animate-spin text-[#25D366]" />
+                  <span className="absolute text-[10px] font-black font-mono">{simulatedProgress}%</span>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black uppercase">Connexion réseau opérateur...</h4>
+                  <p className="text-[10px]" style={{ color: "var(--color-theme-muted)" }}>
+                    Veuillez envoyer votre transfert de <span className="font-bold">{calculation?.grandTotal.toLocaleString("fr-FR")} FCFA</span> :
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border space-y-2 text-left bg-theme-bg" style={{ borderColor: "var(--color-theme-border)" }}>
+                  <div className="flex justify-between text-xs">
+                    <span className="font-bold text-theme-fg/60">📲 Option 1 (Wave) :</span>
+                    <span className="font-black text-[#1d9bf0]">+225 01 43 65 50 88</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="font-bold text-theme-fg/60">📲 Option 2 (Orange) :</span>
+                    <span className="font-black text-orange-500">+225 07 19 17 23 71</span>
+                  </div>
+                </div>
+
+                <p className="text-[9px] max-w-xs mx-auto leading-relaxed" style={{ color: "var(--color-theme-muted)" }}>
+                  Nous vérifions automatiquement la réception de votre Mobile Money sur notre passerelle sécurisée.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4 text-center py-4">
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto text-emerald-500 animate-bounce">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black uppercase text-emerald-500">Paiement Détecté avec Succès !</h4>
+                  <p className="text-[10px]" style={{ color: "var(--color-theme-muted)" }}>
+                    Votre commande est en cours de création. Redirection vers la page de confirmation...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Circular Progress Bar details */}
+            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "var(--color-theme-border)" }}>
+              <div className="h-full transition-all duration-500 rounded-full"
+                style={{
+                  width: `${simulatedProgress}%`,
+                  background: simulationStatus === "success" ? "var(--color-theme-accent)" : "#25D366"
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

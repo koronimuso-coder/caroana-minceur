@@ -17,6 +17,8 @@ export default function Footer() {
 
   const infoLinks = [
     { name: "À Propos de Caroana", href: "/a-propos" },
+    { name: "Minuteur d'Infusion ⏱️", href: "/rituel-timer" },
+    { name: "Suivre ma Commande 📦", href: "/suivi-commande" },
     { name: "FAQ — Questions fréquentes", href: "/#faq" },
     { name: "Contact & Commande", href: "/contact" },
     { name: "Politique de Livraison", href: "/contact" },
