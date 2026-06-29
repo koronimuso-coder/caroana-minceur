@@ -22,6 +22,7 @@ import {
 import { useCart } from "@/hooks/useCart";
 import { CartCalculationResult, CartItemInput } from "@/server/services/cart.service";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 
 const CROSS_SELL_PRODUCTS = [
   {
@@ -448,6 +449,7 @@ export default function CartPage() {
 
         </div>
       </div>
+      <ExitIntentPopup />
     </div>
   );
 }

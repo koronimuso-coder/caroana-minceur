@@ -979,3 +979,105 @@ export const MOCK_PRODUCTS: Product[] = [
     updatedBy: "admin"
   }
 ];
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: "phytotherapie" | "nutrition" | "maternite" | "bien-etre";
+  tags: string[];
+  imageUrl: string;
+  author: string;
+  readTime: string;
+  publishedAt: string;
+  recommendedProductSlug: string;
+}
+
+export const MOCK_BLOG_POSTS: BlogPost[] = [
+  {
+    id: "post1",
+    slug: "bienfaits-kinkeliba-ventre-plat",
+    title: "Le Kinkéliba : Le Secret Ancestral pour un Ventre Plat",
+    excerpt: "Découvrez comment cette plante sauvage d'Afrique de l'Ouest favorise le drainage, dégonfle l'estomac et purifie le foie.",
+    content: `
+      <p>Le <strong>Kinkéliba</strong> (<em>Combretum micranthum</em>) est un arbuste sauvage emblématique des régions sahéliennes d'Afrique de l'Ouest. Surnommé la « tisane de longue vie » au Sénégal et au Mali, il est traditionnellement consommé pour ses vertus thérapeutiques exceptionnelles.</p>
+      
+      <h3>Comment le Kinkéliba agit-il sur la silhouette ?</h3>
+      <p>Pour les personnes cherchant à retrouver un ventre plat et à affiner leur sangle abdominale, le Kinkéliba est un allié de premier ordre :</p>
+      <ul>
+        <li><strong>Drainage profond :</strong> Il stimule la fonction d'élimination rénale et aide à lutter contre la rétention d'eau, responsable de la sensation de gonflement abdominal.</li>
+        <li><strong>Détoxification du foie :</strong> En soutenant l'activité hépatique et biliaire, le Kinkéliba facilite la digestion des graisses et évite les lourdeurs après les repas.</li>
+        <li><strong>Effet ventre plat immédiat :</strong> Grâce à ses propriétés anti-inflammatoires, il apaise le système digestif et prévient les ballonnements et fermentations intestinales.</li>
+      </ul>
+
+      <h3>Conseils de préparation pour une efficacité maximale</h3>
+      <p>Pour en retirer tous les bénéfices, nous vous conseillons de faire infuser les feuilles séchées dans de l'eau frémissante pendant 10 à 15 minutes. Consommez de préférence une tasse le matin à jeun pour réactiver les fonctions d'élimination de l'organisme, et une autre tasse après le repas du midi.</p>
+      
+      <p>Notre formule exclusive de <em>Thé Détox Premium</em> associe le Kinkéliba sauvage à de la citronnelle fraîche pour optimiser le goût et multiplier les bienfaits sur le transit digestif.</p>
+    `,
+    category: "phytotherapie",
+    tags: ["Kinkéliba", "Drainage", "Ventre Plat", "Détox"],
+    imageUrl: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=600&auto=format&fit=crop",
+    author: "Dr. Aminata Touré, Nutritionniste",
+    readTime: "4 min",
+    publishedAt: "18 Juin 2026",
+    recommendedProductSlug: "the-detox"
+  },
+  {
+    id: "post2",
+    slug: "post-partum-ventre-plat-allaitement",
+    title: "Maman Allaitante : Comment retrouver un Ventre Plat en Douceur",
+    excerpt: "Retrouver sa silhouette après l'accouchement tout en préservant la qualité de son lait maternel. Conseils et plantes recommandées.",
+    content: `
+      <p>La période du post-partum est une phase de transition délicate pour le corps d'une nouvelle maman. Vouloir retrouver sa sangle abdominale d'avant-grossesse est tout à fait naturel, mais l'allaitement impose des précautions très strictes concernant la consommation de compléments minceur.</p>
+
+      <h3>La sécurité de bébé avant tout</h3>
+      <p>De nombreux brûleurs de graisses et draineurs intensifs contiennent des substances stimulantes (caféine, théine en excès, ou plantes laxatives) qui passent directement dans le lait maternel. Ces actifs peuvent provoquer de l'irritabilité, de l'insomnie ou des coliques chez le nourrisson. Il est donc crucial d'exclure les cures minceur standards.</p>
+
+      <h3>Les plantes amies de la maman nourrice</h3>
+      <p>Heureusement, la pharmacopée traditionnelle africaine recèle de plantes parfaitement adaptées et sûres pour les mamans allaitantes :</p>
+      <ul>
+        <li><strong>Le Fenouil :</strong> En plus de lutter contre les ballonnements et les gaz de la maman, il stimule naturellement la lactation (effet galactogène) et apaise les coliques du bébé via le lait.</li>
+        <li><strong>La Citronnelle douce :</strong> Elle favorise une bonne digestion globale et aide à désenfler en douceur sans exciter bébé.</li>
+        <li><strong>Le Caolin Purifié traditionnel :</strong> Appliqué en masque sur le ventre ou consommé sous sa forme ultra-purifiée, il est historiquement utilisé pour raffermir les tissus relâchés après l'accouchement.</li>
+      </ul>
+
+      <p>C'est pour répondre à cette double exigence de sécurité et d'efficacité que nous avons conçu la gamme <strong>Caroana Nourrice</strong>, certifiée sans aucun stimulant nocif pour le nourrisson.</p>
+    `,
+    category: "maternite",
+    tags: ["Allaitement", "Post-partum", "Maman", "Nourrice"],
+    imageUrl: "https://images.unsplash.com/photo-1611070973770-b1a672610042?q=80&w=600&auto=format&fit=crop",
+    author: "Fatoumata Sylla, Sage-femme",
+    readTime: "5 min",
+    publishedAt: "15 Juin 2026",
+    recommendedProductSlug: "kit-ventre-plat-nourrice"
+  },
+  {
+    id: "post3",
+    slug: "3-regles-nutrition-perte-de-poids",
+    title: "Les 3 Règles d'Or de la Nutrition pour Accompagner votre Cure",
+    excerpt: "Pour maximiser l'efficacité de vos gélules Minceur, adaptez votre assiette avec ces principes simples et durables.",
+    content: `
+      <p>Prendre des compléments alimentaires ou boire des tisanes minceur est une excellente méthode pour activer le déstockage des graisses et drainer l'organisme. Cependant, pour obtenir des résultats durables et éviter l'effet yoyo, l'assiette joue un rôle clé.</p>
+
+      <h3>1. Maîtrisez l'index glycémique (IG) de vos repas</h3>
+      <p>Lorsque vous consommez des glucides raffinés (pain blanc, riz blanc cassé, sucre blanc, sodas), votre taux de sucre sanguin grimpe en flèche. Cela provoque un pic d'insuline, l'hormone responsable du stockage des graisses, notamment sur l'abdomen. Privilégiez les céréales complètes, le manioc, l'igname ou la patate douce qui fournissent une énergie diffuse sans stocker.</p>
+
+      <h3>2. Ne négligez pas les protéines de qualité</h3>
+      <p>Les protéines ont un fort pouvoir rassasiant et nécessitent de l'énergie pour être digérées (effet thermique des aliments). Elles permettent également de préserver la masse musculaire pendant que vous perdez de la graisse. Misez sur le poisson frais, le poulet sans peau, les œufs et les légumineuses locales comme le niébé.</p>
+
+      <h3>3. L'importance cruciale de l'eau</h3>
+      <p>Boire de l'eau est indispensable pour éliminer les déchets cellulaires libérés par la combustion des graisses. Sans une hydratation abondante (au moins 2 litres par jour), le corps retient les toxines, ce qui ralentit la perte de poids. Utilisez nos tisanes drainantes pour rendre l'eau active et optimiser l'élimination.</p>
+    `,
+    category: "nutrition",
+    tags: ["Nutrition", "Régime", "Index Glycémique", "Protéines"],
+    imageUrl: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?q=80&w=600&auto=format&fit=crop",
+    author: "Serge Kassi, Coach Sportif & Diététicien",
+    readTime: "3 min",
+    publishedAt: "10 Juin 2026",
+    recommendedProductSlug: "gelules-kaylie"
+  }
+];
+

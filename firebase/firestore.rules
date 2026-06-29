@@ -108,6 +108,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 9. Reviews collection
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
     // Helper to check specific role
     function hasRole(role) {
       return isSignedIn() && getUserRole() == role;

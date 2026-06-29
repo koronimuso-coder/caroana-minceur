@@ -5,7 +5,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://caroana-minceur.com";
 
   // Static routes
-  const routes = ["", "/boutique", "/panier", "/connexion"].map((route) => ({
+  const routes = [
+    "",
+    "/boutique",
+    "/panier",
+    "/connexion",
+    "/herbier",
+    "/defi-14-jours",
+    "/routine-perso",
+    "/resultats",
+    "/engagement",
+  ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: "daily" as const,

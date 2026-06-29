@@ -10,6 +10,8 @@ import WhatsAppWidget from "@/components/ui/WhatsAppWidget";
 import IntroLoader from "@/components/ui/IntroLoader";
 import { ScrollProgressBar, BackToTop } from "@/components/ui/PageUtils";
 import CountdownPromo from "@/components/ui/CountdownPromo";
+import { AuthProvider } from "@/hooks/useAuth";
+import SocialProofNotification from "@/components/ui/SocialProofNotification";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -50,18 +52,21 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
       <body className="antialiased bg-theme-bg text-theme-fg selection:bg-theme-accent selection:text-theme-bg">
-        <ThemeProvider>
-          <ScrollProgressBar />
-          <BackToTop />
-          <IntroLoader />
-          <SmoothScroll />
-          <CustomCursor />
-          <CountdownPromo />
-          <Header />
-          <main className="min-h-screen pattern-leaves">{children}</main>
-          <Footer />
-          <WhatsAppWidget />
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <ScrollProgressBar />
+            <BackToTop />
+            <IntroLoader />
+            <SmoothScroll />
+            <CustomCursor />
+            <CountdownPromo />
+            <Header />
+            <main className="min-h-screen pattern-leaves">{children}</main>
+            <Footer />
+            <WhatsAppWidget />
+            <SocialProofNotification />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

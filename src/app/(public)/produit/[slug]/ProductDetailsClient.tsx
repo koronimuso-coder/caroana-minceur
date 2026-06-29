@@ -7,21 +7,20 @@ import {
   MessageCircle, 
   Heart, 
   ShieldAlert, 
-  Award, 
-  Truck, 
-  RefreshCw, 
   Star, 
   Clock, 
   X, 
   Calendar,
-  CheckCircle,
   HelpCircle,
   Eye,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { Product } from "@/types";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import { getProductReviews, submitProductReview } from "@/server/actions/review.action";
 
 interface Props {
   product: Product;
@@ -62,26 +61,58 @@ const INGREDIENTS_GLOSSARY = {
 };
 
 export default function ProductDetailsClient({ product, relatedProducts }: Props) {
+  const { user: authUser } = useAuth();
   const [activeImage, setActiveImage] = useState(product.images[0]?.url || "");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"desc" | "ing" | "usage">("desc");
   
-  // Custom states (Amélioration 21, 24, 29, 30)
+  // Custom states
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<any | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
-  // Review states (Amélioration 24, 25)
+  // Review states
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewName, setReviewName] = useState("");
   const [reviewText, setReviewText] = useState("");
-  const [reviews, setReviews] = useState<any[]>([
-    { name: "Mariam K.", rating: 5, date: "12/06/2026", text: "Déjà perdu 4 kilos en une semaine de cure Skinny. Je recommande vraiment !", verified: true },
-    { name: "Awa T.", rating: 5, date: "08/06/2026", text: "Le pack complet 3 produits a dégonflé mon ventre très rapidement. Les ballonnements ont disparu.", verified: true },
-    { name: "Esther N.", rating: 4, date: "02/06/2026", text: "Très bon goût pour le thé détox. Facile à suivre au travail.", verified: true }
-  ]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState(5.0);
+  const [totalReviews, setTotalReviews] = useState(0);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  // Active viewers state (Social Proof / Urgency)
+  const [viewers, setViewers] = useState(12);
+  useEffect(() => {
+    setViewers(Math.floor(Math.random() * 11) + 8); // Initial random between 8 and 18
+    const interval = setInterval(() => {
+      setViewers(Math.floor(Math.random() * 11) + 8);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadReviews = async () => {
+    setLoadingReviews(true);
+    const res = await getProductReviews(product.id);
+    if (res.success) {
+      setReviews(res.reviews);
+      setAverageRating(res.averageRating);
+      setTotalReviews(res.totalReviews);
+    }
+    setLoadingReviews(false);
+  };
+
+  useEffect(() => {
+    loadReviews();
+  }, [product.id]);
+
+  // Prefill review name if logged in
+  useEffect(() => {
+    if (authUser) {
+      setReviewName(authUser.displayName || authUser.email || "");
+    }
+  }, [authUser]);
 
   // Wishlist state
   const [inWishlist, setInWishlist] = useState(false);
@@ -132,21 +163,24 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
     alert(`« ${product.name} » a été ajouté à votre panier !`);
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (reviewName.trim() && reviewText.trim()) {
-      const newReview = {
+      const res = await submitProductReview({
+        productId: product.id,
+        userId: authUser?.uid || null,
         name: reviewName,
         rating,
-        date: new Date().toLocaleDateString("fr-FR"),
-        text: reviewText,
-        verified: false
-      };
-      setReviews([newReview, ...reviews]);
-      setReviewName("");
-      setReviewText("");
-      setReviewSubmitted(true);
-      setTimeout(() => setReviewSubmitted(false), 3000);
+        comment: reviewText
+      });
+      if (res.success) {
+        setReviewText("");
+        setReviewSubmitted(true);
+        loadReviews();
+        setTimeout(() => setReviewSubmitted(false), 3000);
+      } else {
+        alert(res.error || "Une erreur est survenue.");
+      }
     }
   };
 
@@ -224,13 +258,27 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
         <div className="p-8 sm:p-10">
           <ScrollReveal animation="fade-left" delay={100} className="space-y-4">
             <div className="flex justify-between items-start gap-4">
-              <div>
+              <div className="space-y-1">
                 <span className="text-theme-accent font-bold text-[9px] tracking-[0.25em] uppercase">
                   CAROANA MINCEUR
                 </span>
                 <h1 className="font-serif text-2xl sm:text-3xl font-black text-theme-fg uppercase mt-1 tracking-tight">
                   {product.name}
                 </h1>
+                
+                {/* Average rating next to title */}
+                {totalReviews > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs pt-1">
+                    <div className="flex items-center">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(averageRating) ? "fill-yellow-500 text-yellow-500" : "text-neutral-300"}`} />
+                      ))}
+                    </div>
+                    <span className="font-bold">{averageRating} / 5</span>
+                    <span className="opacity-50">({totalReviews} avis)</span>
+                  </div>
+                )}
+                
                 <p className="text-[10px] text-theme-fg/40 mt-1 uppercase tracking-widest font-semibold">SKU: {product.sku}</p>
               </div>
 
@@ -271,6 +319,19 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
           <ScrollReveal animation="fade-left" delay={260}>
             {hasPrice && !isOutOfStock ? (
               <div className="space-y-6">
+                
+                {/* Active Viewers & Urgency Stock */}
+                <div className="flex flex-col gap-2 p-3.5 rounded-xl border bg-amber-500/[0.02]" style={{ borderColor: "rgba(245,158,11,0.15)" }}>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-500 animate-pulse">
+                    <span>🔥</span>
+                    <span>{viewers} personnes consultent cette cure actuellement.</span>
+                  </div>
+                  {product.stock <= 15 && (
+                    <div className="text-[10px] font-bold text-red-500 dark:text-red-400">
+                      ⚠️ Plus que {product.stock} exemplaires restants de cette récolte !
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center space-x-4">
                   <span className="text-[9px] font-bold text-theme-fg uppercase tracking-widest">Quantité</span>
                   <div className="flex items-center border border-theme-border bg-theme-fg/5 rounded-xl">
@@ -336,7 +397,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
           </ScrollReveal>
         </div>
 
-        {/* Block 4: Interactive Dosage Calendar Planner Preview (Amélioration 30) */}
+        {/* Block 4: Interactive Dosage Calendar Planner Preview */}
         <div className="p-8 sm:p-10">
           <div className="border rounded-2xl p-4 bg-stone-50/50 dark:bg-neutral-900/30" style={{ borderColor: "var(--color-theme-border)" }}>
             <button 
@@ -378,7 +439,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
           </div>
         </div>
 
-        {/* Block 5: Interactive Tabbed Details & Botanical Glossary (Amélioration 29) */}
+        {/* Block 5: Interactive Tabbed Details & Botanical Glossary */}
         <div className="p-8 sm:p-10">
           <ScrollReveal animation="fade-left" delay={420} className="space-y-6">
             <div className="flex border-b border-theme-border">
@@ -434,9 +495,9 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
           </ScrollReveal>
         </div>
 
-        {/* Block 6: Reviews, star rating submission form (Amélioration 24, 25) */}
+        {/* Block 6: Reviews, star rating submission form (Connected to Firestore) */}
         <div className="p-8 sm:p-10 space-y-6">
-          <h3 className="font-serif text-lg font-black uppercase tracking-wider">Avis clients ({reviews.length})</h3>
+          <h3 className="font-serif text-lg font-black uppercase tracking-wider">Avis clients ({totalReviews})</h3>
 
           {/* Form */}
           <form onSubmit={handleReviewSubmit} className="space-y-3 p-4 border rounded-2xl bg-stone-50/50 dark:bg-neutral-900/30" style={{ borderColor: "var(--color-theme-border)" }}>
@@ -467,7 +528,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
                 placeholder="Votre prénom..."
                 value={reviewName}
                 onChange={(e) => setReviewName(e.target.value)}
-                className="p-2.5 border rounded-lg text-xs bg-theme-bg w-full"
+                className="p-2.5 border rounded-lg text-xs bg-theme-bg w-full focus:outline-none"
                 style={{ borderColor: "var(--color-theme-border)" }}
               />
               <input
@@ -476,7 +537,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
                 placeholder="Votre avis en quelques mots..."
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
-                className="p-2.5 border rounded-lg text-xs bg-theme-bg w-full"
+                className="p-2.5 border rounded-lg text-xs bg-theme-bg w-full focus:outline-none"
                 style={{ borderColor: "var(--color-theme-border)" }}
               />
             </div>
@@ -496,33 +557,41 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
           </form>
 
           {/* List of reviews */}
-          <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-            {reviews.map((rev, k) => (
-              <div key={k} className="p-3 border rounded-xl space-y-1.5" style={{ borderColor: "var(--color-theme-border)" }}>
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="font-bold flex items-center gap-1.5">
-                    {rev.name}
-                    {rev.verified && (
-                      <span className="bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 font-black text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded">Achat Vérifié</span>
-                    )}
-                  </span>
-                  <span className="opacity-50">{rev.date}</span>
+          {loadingReviews ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-theme-accent" />
+            </div>
+          ) : reviews.length === 0 ? (
+            <p className="text-xs opacity-50 text-center py-6">Aucun avis pour le moment. Soyez le premier à donner votre avis !</p>
+          ) : (
+            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+              {reviews.map((rev, k) => (
+                <div key={rev.id || k} className="p-3 border rounded-xl space-y-1.5" style={{ borderColor: "var(--color-theme-border)" }}>
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold flex items-center gap-1.5">
+                      {rev.name}
+                      {rev.verified && (
+                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-[7px] uppercase tracking-widest px-1.5 py-0.5 rounded">Achat Vérifié</span>
+                      )}
+                    </span>
+                    <span className="opacity-50">{rev.createdAt}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`w-3.5 h-3.5 ${i < rev.rating ? "fill-yellow-500 text-yellow-500" : "text-neutral-200"}`} />
+                    ))}
+                  </div>
+                  <p className="text-xs opacity-85 leading-normal">{rev.comment}</p>
                 </div>
-                <div className="flex items-center gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`w-3.5 h-3.5 ${i < rev.rating ? "fill-yellow-500 text-yellow-500" : "text-neutral-200"}`} />
-                  ))}
-                </div>
-                <p className="text-xs opacity-85 leading-normal">{rev.text}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
         </div>
 
       </div>
 
-      {/* ================== MOBILE STICKY FOOTER CTA (Amélioration 27) ================== */}
+      {/* ================== MOBILE STICKY FOOTER CTA ================== */}
       {hasPrice && !isOutOfStock && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-black/95 border-t border-theme-border p-4 shadow-2xl flex items-center justify-between backdrop-blur-md">
           <div className="flex flex-col">
@@ -551,7 +620,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
         </div>
       )}
 
-      {/* ================== LIGHTBOX PICTURE ZOOM OVERLAY (Amélioration 21) ================== */}
+      {/* ================== LIGHTBOX PICTURE ZOOM OVERLAY ================== */}
       {isLightboxOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
           <button 
@@ -566,7 +635,7 @@ export default function ProductDetailsClient({ product, relatedProducts }: Props
         </div>
       )}
 
-      {/* ================== BOTANICAL INGREDIENT MODAL GLOSSARY (Amélioration 29) ================== */}
+      {/* ================== BOTANICAL INGREDIENT MODAL GLOSSARY ================== */}
       {selectedIngredient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedIngredient(null)} />

@@ -5,13 +5,30 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { checkoutSchema } from "@/schemas";
 import { processCheckout } from "@/server/actions/checkout.action";
-import { ShieldCheck, MessageCircle, Wallet, CreditCard, Landmark, Loader2, CheckCircle2, QrCode, Smartphone, X } from "lucide-react";
+import { getUserProfile, getAddresses } from "@/server/actions/profile.action";
+import { UserAddress } from "@/types";
+import { 
+  ShieldCheck, 
+  MessageCircle, 
+  Wallet, 
+  CreditCard, 
+  Landmark, 
+  Loader2, 
+  CheckCircle2, 
+  X, 
+  MapPin,
+  Check 
+} from "lucide-react";
+import ExitIntentPopup from "@/components/ui/ExitIntentPopup";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, clearCart } = useCart();
+  const { user: authUser } = useAuth();
+  
   const [calculation, setCalculation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +39,10 @@ export default function CheckoutPage() {
   const [simulatedProgress, setSimulatedProgress] = useState(0);
   const [simulationStatus, setSimulationStatus] = useState<"verifying" | "success" | "idle">("idle");
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
+
+  // Address book state
+  const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
 
   const {
     register,
@@ -53,14 +74,13 @@ export default function CheckoutPage() {
     },
   });
 
+  // Redirect if cart empty & calculate totals
   useEffect(() => {
-    // Redirect if cart empty
     if (items.length === 0) {
       router.push("/panier");
       return;
     }
 
-    // Load server-side totals
     async function loadTotals() {
       try {
         const inputItems = items.map((it) => ({
@@ -84,11 +104,73 @@ export default function CheckoutPage() {
     loadTotals();
   }, [items, router]);
 
+  // Load authenticated user profile & addresses
+  useEffect(() => {
+    if (!authUser) return;
+
+    const uid = authUser.uid;
+    const email = authUser.email;
+
+    async function loadUserProfile() {
+      const profRes = await getUserProfile(uid);
+      if (profRes.success && profRes.profile) {
+        const p = profRes.profile;
+        setValue("customer.firstName", p.firstName || "");
+        setValue("customer.lastName", p.lastName || "");
+        setValue("customer.phone", p.phone || "");
+        setValue("customer.email", email || "");
+
+        // Set default shipping address info
+        setValue("shippingAddress.firstName", p.firstName || "");
+        setValue("shippingAddress.lastName", p.lastName || "");
+        setValue("shippingAddress.phone", p.phone || "");
+      } else {
+        setValue("customer.email", email || "");
+      }
+
+      const addrRes = await getAddresses(uid);
+      if (addrRes.success && addrRes.addresses && addrRes.addresses.length > 0) {
+        setSavedAddresses(addrRes.addresses);
+        
+        // Find default address to prefill
+        const defaultAddr = addrRes.addresses.find(a => a.isDefault) || addrRes.addresses[0];
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          applySavedAddress(defaultAddr);
+        }
+      }
+    }
+
+    loadUserProfile();
+  }, [authUser, setValue]);
+
+  // Helper to fill form fields with selected address details
+  const applySavedAddress = (adr: UserAddress) => {
+    setValue("shippingAddress.firstName", adr.firstName);
+    setValue("shippingAddress.lastName", adr.lastName);
+    setValue("shippingAddress.phone", adr.phone);
+    setValue("shippingAddress.secondaryPhone", adr.secondaryPhone || "");
+    setValue("shippingAddress.city", adr.city);
+    setValue("shippingAddress.commune", adr.commune);
+    setValue("shippingAddress.neighborhood", adr.neighborhood);
+    setValue("shippingAddress.landmark", adr.landmark || "");
+    setValue("shippingAddress.addressLine", adr.addressLine);
+    setValue("shippingAddress.deliveryInstructions", adr.deliveryInstructions || "");
+  };
+
+  const handleSelectAddress = (id: string) => {
+    setSelectedAddressId(id);
+    const adr = savedAddresses.find(a => a.id === id);
+    if (adr) {
+      applySavedAddress(adr);
+    }
+  };
+
   const finalizeOrder = async (orderData: any) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await processCheckout(null, orderData);
+      const result = await processCheckout(authUser?.uid || null, orderData);
       if (result.success) {
         clearCart();
         if (result.redirectUrl) {
@@ -175,7 +257,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-2 space-y-8">
             
             {/* 1. Client Contact Info */}
-            <div className="bg-theme-card p-6 rounded-premium border border-theme-border shadow-premium">
+            <div className="bg-theme-card p-6 rounded-2xl border border-theme-border shadow-sm">
               <h2 className="font-serif text-lg font-bold text-theme-fg mb-4">
                 1. Vos coordonnées
               </h2>
@@ -185,10 +267,10 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     {...register("customer.firstName")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.customer?.firstName && (
-                    <span className="text-[10px] text-danger">{errors.customer.firstName.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.customer.firstName.message}</span>
                   )}
                 </div>
                 <div>
@@ -196,10 +278,10 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     {...register("customer.lastName")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.customer?.lastName && (
-                    <span className="text-[10px] text-danger">{errors.customer.lastName.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.customer.lastName.message}</span>
                   )}
                 </div>
                 <div>
@@ -207,10 +289,10 @@ export default function CheckoutPage() {
                   <input
                     type="email"
                     {...register("customer.email")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.customer?.email && (
-                    <span className="text-[10px] text-danger">{errors.customer.email.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.customer.email.message}</span>
                   )}
                 </div>
                 <div>
@@ -219,27 +301,48 @@ export default function CheckoutPage() {
                     type="text"
                     {...register("customer.phone")}
                     placeholder="+225..."
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.customer?.phone && (
-                    <span className="text-[10px] text-danger">{errors.customer.phone.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.customer.phone.message}</span>
                   )}
                 </div>
               </div>
             </div>
 
             {/* 2. Shipping Address */}
-            <div className="bg-theme-card p-6 rounded-premium border border-theme-border shadow-premium">
-              <h2 className="font-serif text-lg font-bold text-theme-fg mb-4">
-                2. Adresse de livraison
-              </h2>
+            <div className="bg-theme-card p-6 rounded-2xl border border-theme-border shadow-sm space-y-4">
+              <div className="flex justify-between items-center flex-wrap gap-2 mb-2">
+                <h2 className="font-serif text-lg font-bold text-theme-fg">
+                  2. Adresse de livraison
+                </h2>
+                
+                {/* Saved addresses selector */}
+                {savedAddresses.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs bg-theme-bg border border-theme-border p-1.5 rounded-xl">
+                    <MapPin className="w-3.5 h-3.5 text-theme-accent" />
+                    <select
+                      value={selectedAddressId}
+                      onChange={(e) => handleSelectAddress(e.target.value)}
+                      className="bg-transparent font-bold focus:outline-none cursor-pointer outline-none border-none text-[11px]"
+                    >
+                      {savedAddresses.map((adr) => (
+                        <option key={adr.id} value={adr.id} className="text-black">
+                          {adr.commune} - {adr.neighborhood} ({adr.firstName})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-theme-fg uppercase tracking-wider block mb-1">Ville *</label>
                   <input
                     type="text"
                     {...register("shippingAddress.city")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                 </div>
                 <div>
@@ -248,10 +351,10 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="ex: Cocody, Marcory, Yopougon"
                     {...register("shippingAddress.commune")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.shippingAddress?.commune && (
-                    <span className="text-[10px] text-danger">{errors.shippingAddress.commune.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.shippingAddress.commune.message}</span>
                   )}
                 </div>
                 <div>
@@ -260,10 +363,10 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="ex: Riviera 3, Angré"
                     {...register("shippingAddress.neighborhood")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.shippingAddress?.neighborhood && (
-                    <span className="text-[10px] text-danger">{errors.shippingAddress.neighborhood.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.shippingAddress.neighborhood.message}</span>
                   )}
                 </div>
                 <div>
@@ -272,10 +375,10 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="ex: En face de la pharmacie"
                     {...register("shippingAddress.landmark")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.shippingAddress?.landmark && (
-                    <span className="text-[10px] text-danger">{errors.shippingAddress.landmark.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.shippingAddress.landmark.message}</span>
                   )}
                 </div>
                 <div className="sm:col-span-2">
@@ -283,17 +386,17 @@ export default function CheckoutPage() {
                   <textarea
                     rows={2}
                     {...register("shippingAddress.addressLine")}
-                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-button text-xs p-2.5 focus:outline-none focus:border-theme-accent"
+                    className="w-full bg-theme-bg border border-theme-border text-theme-fg rounded-xl text-xs p-2.5 focus:outline-none focus:border-theme-accent"
                   />
                   {errors.shippingAddress?.addressLine && (
-                    <span className="text-[10px] text-danger">{errors.shippingAddress.addressLine.message}</span>
+                    <span className="text-[10px] text-red-500">{errors.shippingAddress.addressLine.message}</span>
                   )}
                 </div>
               </div>
             </div>
 
             {/* 3. Payment Method Choice */}
-            <div className="bg-theme-card p-6 rounded-premium border border-theme-border shadow-premium">
+            <div className="bg-theme-card p-6 rounded-2xl border border-theme-border shadow-sm">
               <h2 className="font-serif text-lg font-bold text-theme-fg mb-4">
                 3. Moyen de paiement
               </h2>
@@ -302,7 +405,7 @@ export default function CheckoutPage() {
                 {/* Manual Mobile Money */}
                 <div
                   onClick={() => setPaymentMethod("ManualPaymentProvider")}
-                  className={`p-4 rounded-premium border-2 cursor-pointer transition-smooth flex items-start space-x-3 ${
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start space-x-3 ${
                     paymentMethod === "ManualPaymentProvider" ? "border-theme-accent bg-theme-accent/5" : "border-theme-border bg-theme-card"
                   }`}
                 >
@@ -318,7 +421,7 @@ export default function CheckoutPage() {
                 {/* Cash on delivery */}
                 <div
                   onClick={() => setPaymentMethod("CashOnDeliveryProvider")}
-                  className={`p-4 rounded-premium border-2 cursor-pointer transition-smooth flex items-start space-x-3 ${
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start space-x-3 ${
                     paymentMethod === "CashOnDeliveryProvider" ? "border-theme-accent bg-theme-accent/5" : "border-theme-border bg-theme-card"
                   }`}
                 >
@@ -334,7 +437,7 @@ export default function CheckoutPage() {
                 {/* Sandbox Mobile Money */}
                 <div
                   onClick={() => setPaymentMethod("MobileMoneyProvider")}
-                  className={`p-4 rounded-premium border-2 cursor-pointer transition-smooth flex items-start space-x-3 ${
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start space-x-3 ${
                     paymentMethod === "MobileMoneyProvider" ? "border-theme-accent bg-theme-accent/5" : "border-theme-border bg-theme-card"
                   }`}
                 >
@@ -350,7 +453,7 @@ export default function CheckoutPage() {
                 {/* WhatsApp Direct Order */}
                 <div
                   onClick={() => setPaymentMethod("WhatsAppOrderProvider")}
-                  className={`p-4 rounded-premium border-2 cursor-pointer transition-smooth flex items-start space-x-3 ${
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start space-x-3 ${
                     paymentMethod === "WhatsAppOrderProvider" ? "border-theme-accent bg-theme-accent/5" : "border-theme-border bg-theme-card"
                   }`}
                 >
@@ -370,7 +473,7 @@ export default function CheckoutPage() {
 
           {/* RIGHT COLUMN: Summary & Submit */}
           <div>
-            <div className="bg-theme-card border border-theme-border p-6 rounded-premium shadow-premium sticky top-28">
+            <div className="bg-theme-card border border-theme-border p-6 rounded-2xl shadow-sm sticky top-28">
               <h2 className="font-serif text-lg font-bold text-theme-fg mb-4 pb-2 border-b border-theme-border">
                 Commande
               </h2>
@@ -403,13 +506,13 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {error && <div className="text-[10px] text-danger mb-4 font-semibold">{error}</div>}
+              {error && <div className="text-[10px] text-red-500 mb-4 font-semibold">{error}</div>}
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center space-x-2 py-3.5 bg-theme-accent hover:bg-theme-accent-hover text-theme-bg font-bold rounded-button shadow-premium transition-smooth text-sm cursor-pointer disabled:opacity-50"
+                className="w-full flex items-center justify-center space-x-2 py-3.5 bg-theme-accent hover:bg-theme-accent-hover text-theme-bg font-bold rounded-xl shadow-md transition-all text-sm cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-theme-bg border-t-transparent rounded-full animate-spin" />
@@ -508,6 +611,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
+      <ExitIntentPopup />
     </div>
   );
 }

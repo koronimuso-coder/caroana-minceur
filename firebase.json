@@ -1,0 +1,26 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "CAROANA MINCEUR",
+        "supportEmail": "contact@caroana-minceur.com",
+        "authorizedRedirectUris": [
+          "https://caroana-minceur.vercel.app"
+        ]
+      }
+    },
+    "authorizedDomains": [
+      "localhost",
+      "caroana-minceur.firebaseapp.com",
+      "caroana-minceur.vercel.app"
+    ]
+  },
+  "firestore": {
+    "rules": "firebase/firestore.rules",
+    "indexes": "firebase/firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "firebase/storage.rules"
+  }
+}

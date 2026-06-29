@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -19,27 +19,32 @@ import {
   ArrowRight, 
   ShoppingBagIcon, 
   ChevronRight,
-  Info
+  Info,
+  LogOut,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "@/components/ui/AuthModal";
+import { MOCK_PRODUCTS, MOCK_BLOG_POSTS } from "@/server/mockDb";
 
-const SEARCHABLE_PRODUCTS = [
-  { name: "Gélules Ventre Plat", href: "/produit/gelules-ventre-plat", type: "Produit" },
-  { name: "Gélules Minceur Kaylie", href: "/produit/gelules-kaylie", type: "Produit Premium" },
-  { name: "Gélules Minceur Skinny", href: "/produit/gelules-skinny", type: "Produit Express" },
-  { name: "Thé Détox", href: "/produit/the-detox", type: "Boisson" },
-  { name: "Tisane Ventre Plat", href: "/produit/tisane-ventre-plat", type: "Infusion" },
-  { name: "Tisane Minceur", href: "/produit/tisane-minceur", type: "Infusion" },
-  { name: "Produit Minceur", href: "/produit/produit-minceur", type: "Complément" },
-  { name: "Gélules Ventre Plat Nourrice", href: "/boutique", type: "Nourrice" },
-  { name: "Caolin Ventre Plat Nourrice", href: "/boutique", type: "Nourrice" },
-  { name: "Tisane Ventre Plat Nourrice", href: "/boutique", type: "Nourrice" },
-  { name: "Pack Complet 3 Produits", href: "/boutique", type: "Pack" },
-  { name: "Kit Ventre Plat Nourrice", href: "/boutique", type: "Promo Kit" },
-  { name: "Bilan Minceur & IMC", href: "/bilan-minceur", type: "Diagnostic" },
-  { name: "Suivi de Cure", href: "/suivi-cure", type: "Calendrier" },
-];
+interface SearchableItem {
+  id: string;
+  name: string;
+  href: string;
+  type: string;
+  price: number | null;
+  compareAtPrice: number | null;
+  image: string;
+  isProduct: boolean;
+  sku: string;
+  slug: string;
+  product?: any;
+  readTime?: string;
+  category?: string;
+  isUtil?: boolean;
+  emoji?: string;
+}
 
 export default function Header() {
   const pathname = usePathname();
@@ -48,7 +53,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   
   // Cart store details
-  const { items, updateQuantity, removeItem, getSubtotal } = useCart();
+  const { items, updateQuantity, removeItem, getSubtotal, addItem } = useCart();
   const getItemCount = useCart((state) => state.getItemCount);
   const [cartCount, setCartCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -62,6 +67,176 @@ export default function Header() {
   
   // Recovery toast details
   const [showRecovery, setShowRecovery] = useState(false);
+
+  // Auth
+  const { user, logout } = useAuth();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Prepare searchable items from mock data
+  const searchableItems = useMemo<SearchableItem[]>(() => {
+    const products = MOCK_PRODUCTS.map(p => ({
+      id: p.id,
+      name: p.name,
+      href: `/produit/${p.slug}`,
+      type: p.productType === "bundle" ? "Pack Promo" : p.productType === "capsules" ? "Complément" : "Infusion",
+      price: p.price,
+      compareAtPrice: p.compareAtPrice,
+      image: p.images[0]?.url || "",
+      isProduct: true,
+      sku: p.sku,
+      slug: p.slug,
+      product: p
+    }));
+
+    const blogPosts = MOCK_BLOG_POSTS.map(post => ({
+      id: post.id,
+      name: post.title,
+      href: `/blog/${post.slug}`,
+      type: "Article de Blog",
+      price: null,
+      compareAtPrice: null,
+      image: post.imageUrl || "",
+      isProduct: false,
+      sku: "",
+      slug: post.slug,
+      readTime: post.readTime,
+      category: post.category
+    }));
+
+    const utils = [
+      {
+        id: "bilan",
+        name: "Bilan Minceur & IMC",
+        href: "/bilan-minceur",
+        type: "Diagnostic",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "bilan-minceur",
+        isUtil: true,
+        emoji: "📋"
+      },
+      {
+        id: "routine",
+        name: "Routine Minceur Sur-Mesure",
+        href: "/routine-perso",
+        type: "Outil Minceur",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "routine-perso",
+        isUtil: true,
+        emoji: "✨"
+      },
+      {
+        id: "defi",
+        name: "Défi Minceur 14 Jours",
+        href: "/defi-14-jours",
+        type: "Motivation",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "defi-14-jours",
+        isUtil: true,
+        emoji: "🏆"
+      },
+      {
+        id: "herbier",
+        name: "L'Herbier Caroana (Botanique)",
+        href: "/herbier",
+        type: "Éducation",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "herbier",
+        isUtil: true,
+        emoji: "🍃"
+      },
+      {
+        id: "resultats",
+        name: "Résultats & Témoignages (Avant/Après)",
+        href: "/resultats",
+        type: "Preuve Sociale",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "resultats",
+        isUtil: true,
+        emoji: "⭐"
+      },
+      {
+        id: "engagement",
+        name: "Charte d'Engagement & Sourcing",
+        href: "/engagement",
+        type: "Notre Vision",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "engagement",
+        isUtil: true,
+        emoji: "🌍"
+      },
+      {
+        id: "suivi",
+        name: "Suivi de Cure",
+        href: "/suivi-cure",
+        type: "Calendrier",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "suivi-cure",
+        isUtil: true,
+        emoji: "📅"
+      },
+      {
+        id: "timer",
+        name: "Rituel Infusion & Minuteur",
+        href: "/rituel-timer",
+        type: "Outil Minceur",
+        price: null,
+        compareAtPrice: null,
+        image: "",
+        isProduct: false,
+        sku: "",
+        slug: "rituel-timer",
+        isUtil: true,
+        emoji: "⏱️"
+      }
+    ];
+
+    return [...products, ...blogPosts, ...utils];
+  }, []);
+
+  const handleAddProductToCart = (e: React.MouseEvent, item: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem({
+      productId: item.id,
+      variantId: null,
+      sku: item.sku,
+      name: item.name,
+      price: item.price,
+      imageUrl: item.image
+    });
+    // Open cart drawer and close search overlay
+    setIsSearchOpen(false);
+    setIsCartOpen(true);
+  };
 
   useEffect(() => {
     setCartCount(getItemCount());
@@ -113,11 +288,13 @@ export default function Header() {
   const navLinks = [
     { name: "Accueil", href: "/", emoji: "🏠" },
     { name: "Boutique", href: "/boutique", emoji: "🛍️" },
+    { name: "Routine", href: "/routine-perso", emoji: "✨" },
+    { name: "Défi 14J", href: "/defi-14-jours", emoji: "🏆" },
+    { name: "Herbier", href: "/herbier", emoji: "🍃" },
+    { name: "Résultats", href: "/resultats", emoji: "⭐" },
+    { name: "Engagements", href: "/engagement", emoji: "🌍" },
     { name: "Bilan Minceur", href: "/bilan-minceur", emoji: "📋" },
-    { name: "Suivi Cure", href: "/suivi-cure", emoji: "📅" },
-    { name: "Rituel Infusion", href: "/rituel-timer", emoji: "⏱️" },
-    { name: "Suivi Commande", href: "/suivi-commande", emoji: "📦" },
-    { name: "À Propos", href: "/a-propos", emoji: "🌿" },
+    { name: "Blog", href: "/blog", emoji: "📝" },
   ];
 
   const isActive = (href: string) =>
@@ -125,8 +302,9 @@ export default function Header() {
 
   // Filter search matches
   const searchResults = searchQuery.trim()
-    ? SEARCHABLE_PRODUCTS.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ? searchableItems.filter(item => 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
 
@@ -295,18 +473,73 @@ export default function Header() {
             </button>
 
             {/* Account */}
-            <Link
-              href="/compte"
-              aria-label="Mon compte"
-              className="hidden md:flex w-9 h-9 rounded-full items-center justify-center transition-all duration-300"
-              style={{
-                border: "1px solid var(--color-theme-border)",
-                background: "var(--color-theme-card)",
-                color: "var(--color-theme-fg)",
-              }}
-            >
-              <UserIcon className="w-3.5 h-3.5" />
-            </Link>
+            {user ? (
+              <div className="relative hidden md:block">
+                <button
+                  onClick={() => setShowUserMenu((v) => !v)}
+                  aria-label="Mon compte"
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 overflow-hidden cursor-pointer"
+                  style={{
+                    border: "1px solid var(--color-theme-border)",
+                    background: "var(--color-theme-accent)",
+                    color: "var(--color-theme-bg)",
+                  }}
+                >
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName ?? ""} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[11px] font-black">
+                      {(user.displayName ?? user.email ?? "U").charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+                {showUserMenu && (
+                  <div
+                    className="absolute right-0 top-12 w-48 rounded-xl shadow-2xl overflow-hidden z-50"
+                    style={{ background: "var(--color-theme-card)", border: "1px solid var(--color-theme-border)" }}
+                  >
+                    <div className="px-4 py-3 border-b" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <p className="text-[11px] font-bold" style={{ color: "var(--color-theme-fg)" }}>
+                        {user.displayName ?? "Mon compte"}
+                      </p>
+                      <p className="text-[10px] opacity-50" style={{ color: "var(--color-theme-fg)" }}>
+                        {user.email ?? user.phoneNumber}
+                      </p>
+                    </div>
+                    <Link
+                      href="/compte"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-[11px] font-semibold transition-colors hover:bg-forest/10"
+                      style={{ color: "var(--color-theme-fg)" }}
+                    >
+                      <UserIcon className="w-3.5 h-3.5" />
+                      Mon espace
+                    </Link>
+                    <button
+                      onClick={() => { logout(); setShowUserMenu(false); }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-[11px] font-semibold text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      Se déconnecter
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthOpen(true)}
+                aria-label="Se connecter"
+                id="header-auth-btn"
+                className="hidden md:flex w-9 h-9 rounded-full items-center justify-center transition-all duration-300 cursor-pointer"
+                style={{
+                  border: "1px solid var(--color-theme-border)",
+                  background: "var(--color-theme-card)",
+                  color: "var(--color-theme-fg)",
+                }}
+              >
+                <UserIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             {/* Mobile menu hamburger */}
             <button
@@ -559,30 +792,33 @@ export default function Header() {
 
       {/* === INSTANT SEARCH OVERLAY (Amélioration 2) === */}
       {isSearchOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "rgba(var(--header-bg-rgb, 7,8,9), 0.98)" }}>
+        <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto" style={{ background: "rgba(var(--header-bg-rgb, 7,8,9), 0.98)", backdropFilter: "blur(20px)" }}>
           {/* Header row */}
-          <div className="max-w-4xl mx-auto w-full px-6 py-8 flex justify-between items-center">
-            <h3 className="font-serif text-xl font-bold">Recherche instantanée</h3>
+          <div className="max-w-6xl mx-auto w-full px-6 py-8 flex justify-between items-center">
+            <div className="flex flex-col">
+              <h3 className="font-serif text-2xl font-bold tracking-wide" style={{ color: "var(--color-theme-fg)" }}>Recherche Prédictive</h3>
+              <span className="text-[10px] text-emerald-500 uppercase tracking-widest font-bold">Caroana Minceur & Phytothérapie</span>
+            </div>
             <button 
               onClick={() => setIsSearchOpen(false)}
               className="w-10 h-10 rounded-full flex items-center justify-center border hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              style={{ borderColor: "var(--color-theme-border)" }}
+              style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Search Input */}
-          <div className="max-w-2xl mx-auto w-full px-6 pt-10">
+          <div className="max-w-4xl mx-auto w-full px-6 pt-6 pb-12 flex-1 flex flex-col">
             <div className="relative">
               <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 opacity-40" />
               <input
                 type="text"
                 autoFocus
-                placeholder="Entrez le nom d'un produit, d'un pack ou d'un rituel..."
+                placeholder="Ex: Ventre plat, Kinkéliba, Kaylie, allaitement..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 border rounded-xl text-base focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 py-4 border rounded-2xl text-base focus:outline-none transition-all focus:ring-2 focus:ring-emerald-500/20"
                 style={{
                   background: "var(--color-theme-card)",
                   borderColor: "var(--color-theme-accent)",
@@ -591,46 +827,159 @@ export default function Header() {
               />
             </div>
 
-            {/* Search Suggestions */}
-            <div className="mt-8 space-y-3">
+            {/* Search Suggestions & Results */}
+            <div className="mt-8 flex-1">
               {searchQuery.trim() === "" ? (
-                <div className="space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider opacity-40">Recherches suggérées</span>
-                  <div className="flex flex-wrap gap-2">
-                    {["Gélules Kaylie", "Thé Détox", "Pack Complet", "Nourrice", "Allaitement", "Bilan IMC"].map(kw => (
-                      <button
-                        key={kw}
-                        onClick={() => setSearchQuery(kw)}
-                        className="px-3.5 py-1.5 border rounded-lg text-xs font-semibold hover:border-emerald-500 hover:text-emerald-500 cursor-pointer transition-colors"
-                        style={{ borderColor: "var(--color-theme-border)" }}
-                      >
-                        {kw}
-                      </button>
-                    ))}
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <span className="text-xs font-bold uppercase tracking-wider opacity-40">Recherches populaires</span>
+                    <div className="flex flex-wrap gap-2">
+                      {["Ventre Plat", "Kinkéliba", "Kaylie", "Nourrice", "Allaitement", "Pack", "Détox"].map(kw => (
+                        <button
+                          key={kw}
+                          onClick={() => setSearchQuery(kw)}
+                          className="px-3.5 py-1.5 border rounded-lg text-xs font-semibold hover:border-emerald-500 hover:text-emerald-500 cursor-pointer transition-colors"
+                          style={{ borderColor: "var(--color-theme-border)", color: "var(--color-theme-fg)" }}
+                        >
+                          {kw}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                    <div className="p-5 rounded-2xl border bg-stone-50/10 dark:bg-neutral-900/10 flex items-start gap-3" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-2xl">🌱</span>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold">100% Naturel</h4>
+                        <p className="text-[10px] opacity-60">Plantes sauvages d'Afrique de l'Ouest sélectionnées avec soin.</p>
+                      </div>
+                    </div>
+                    <div className="p-5 rounded-2xl border bg-stone-50/10 dark:bg-neutral-900/10 flex items-start gap-3" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-2xl">🍼</span>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold">Spécial Nourrices</h4>
+                        <p className="text-[10px] opacity-60">Cures douces sans stimulants, idéales pour l'allaitement.</p>
+                      </div>
+                    </div>
+                    <div className="p-5 rounded-2xl border bg-stone-50/10 dark:bg-neutral-900/10 flex items-start gap-3" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-2xl">📋</span>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold">Bilan Gratuit</h4>
+                        <p className="text-[10px] opacity-60">Calculez votre IMC et recevez des conseils minceur personnalisés.</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : searchResults.length === 0 ? (
-                <div className="text-center py-10 text-sm opacity-60">
-                  Aucun résultat trouvé pour « {searchQuery} »
+                <div className="text-center py-20 text-sm opacity-60 flex flex-col items-center gap-2">
+                  <span className="text-3xl">🔍</span>
+                  <span>Aucun résultat trouvé pour « {searchQuery} »</span>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                  <span className="text-xs font-bold uppercase tracking-wider opacity-40">Résultats ({searchResults.length})</span>
-                  {searchResults.map((res, i) => (
-                    <Link
-                      key={i}
-                      href={res.href}
-                      className="p-3 rounded-xl border flex justify-between items-center transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                      style={{ borderColor: "var(--color-theme-border)" }}
-                      onClick={() => setIsSearchOpen(false)}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold">{res.name}</span>
-                        <span className="text-[10px] opacity-50 uppercase font-black tracking-widest">{res.type}</span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 opacity-50" />
-                    </Link>
-                  ))}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Column 1: Products */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b pb-2 mb-2" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Cures & Produits Minceur</span>
+                      <span className="text-[10px] font-mono opacity-50">{searchResults.filter(r => r.isProduct).length} trouvés</span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                      {searchResults.filter(r => r.isProduct).length === 0 ? (
+                        <p className="text-xs opacity-50 py-4">Aucune cure ne correspond à votre recherche.</p>
+                      ) : (
+                        searchResults.filter(r => r.isProduct).map((res) => (
+                          <div
+                            key={res.id}
+                            className="p-3 rounded-xl border flex gap-3 items-center transition-all hover:bg-forest/5"
+                            style={{ borderColor: "var(--color-theme-border)", background: "var(--color-theme-card)" }}
+                          >
+                            <Link href={res.href} onClick={() => setIsSearchOpen(false)} className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 relative">
+                              <img src={res.image} alt={res.name} className="w-full h-full object-cover" />
+                            </Link>
+
+                            <div className="flex-1 min-w-0">
+                              <Link href={res.href} onClick={() => setIsSearchOpen(false)} className="block group">
+                                <h4 className="text-xs font-bold truncate group-hover:text-emerald-500 transition-colors">{res.name}</h4>
+                              </Link>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide bg-neutral-100 dark:bg-neutral-800 opacity-80" style={{ color: "var(--color-theme-accent)" }}>
+                                  {res.type}
+                                </span>
+                                <span className="text-xs font-mono font-bold">
+                                  {res.price?.toLocaleString("fr-FR")} FCFA
+                                </span>
+                                {res.compareAtPrice && (
+                                  <span className="text-[10px] line-through opacity-40 font-mono">
+                                    {res.compareAtPrice.toLocaleString("fr-FR")} FCFA
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={(e) => handleAddProductToCart(e, res)}
+                              className="px-3 py-2 rounded-lg font-bold text-[9px] uppercase tracking-wider text-white transition-all hover:scale-105 active:scale-95 cursor-pointer flex-shrink-0"
+                              style={{ background: "var(--color-theme-accent)" }}
+                            >
+                              Ajouter
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column 2: Blog & Diagnostic */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center border-b pb-2 mb-2" style={{ borderColor: "var(--color-theme-border)" }}>
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Blog, Conseils & Diagnostics</span>
+                      <span className="text-[10px] font-mono opacity-50">{searchResults.filter(r => !r.isProduct).length} trouvés</span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                      {searchResults.filter(r => !r.isProduct).length === 0 ? (
+                        <p className="text-xs opacity-50 py-4">Aucun article ou outil ne correspond.</p>
+                      ) : (
+                        searchResults.filter(r => !r.isProduct).map((res) => (
+                          <Link
+                            key={res.id}
+                            href={res.href}
+                            onClick={() => setIsSearchOpen(false)}
+                            className="p-3 rounded-xl border flex gap-3 items-center transition-all hover:bg-forest/5"
+                            style={{ borderColor: "var(--color-theme-border)", background: "var(--color-theme-card)" }}
+                          >
+                            {res.isUtil ? (
+                              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/20 text-2xl flex-shrink-0">
+                                {res.emoji}
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100">
+                                <img src={res.image} alt={res.name} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-bold truncate">{res.name}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide bg-neutral-100 dark:bg-neutral-800 opacity-80">
+                                  {res.type}
+                                </span>
+                                {res.readTime && (
+                                  <span className="text-[9px] opacity-50">
+                                    ⏱️ {res.readTime}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <ChevronRight className="w-4 h-4 opacity-50 flex-shrink-0" />
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -679,6 +1028,17 @@ export default function Header() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* === AUTH MODAL === */}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+
+      {/* Click-outside to close user menu */}
+      {showUserMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowUserMenu(false)}
+        />
       )}
     </>
   );

@@ -38,11 +38,14 @@ export default function Footer() {
   const infoLinks = [
     { name: "À Propos de Caroana", href: "/a-propos" },
     { name: "Bilan Minceur & IMC 🌿", href: "/bilan-minceur" },
+    { name: "Routine Sur-Mesure ✨", href: "/routine-perso" },
+    { name: "Défi Minceur 14 Jours 🏆", href: "/defi-14-jours" },
+    { name: "L'Herbier Botanique 🍃", href: "/herbier" },
+    { name: "Résultats & Témoignages ⭐", href: "/resultats" },
+    { name: "Engagements & Qualité 🌍", href: "/engagement" },
     { name: "Suivi de Cure 📅", href: "/suivi-cure" },
     { name: "Minuteur d'Infusion ⏱️", href: "/rituel-timer" },
     { name: "Suivre ma Commande 📦", href: "/suivi-commande" },
-    { name: "Plan du Site (Sitemap) 🗺️", href: "/sitemap.xml" },
-    { name: "Conditions de Vente & Livraison", href: "/contact" },
   ];
 
   const socials = [

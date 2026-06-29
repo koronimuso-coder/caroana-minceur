@@ -325,9 +325,32 @@ const CATEGORIES = [
   { label: "Thés & Tisanes", val: "infusions" },
 ];
 
+const getProductTargets = (id: string): string[] => {
+  if (id.includes("nourrice")) return ["maternite", "ventre-plat"];
+  if (id === "p1" || id === "p3") return ["ventre-plat", "drainage"];
+  if (id === "p2") return ["drainage"];
+  if (id === "p-kaylie" || id === "p-skinny") return ["perte-intense", "ventre-plat"];
+  if (id === "p-tisane-m") return ["perte-intense", "drainage"];
+  if (id === "p-produit-m") return ["perte-intense"];
+  return ["ventre-plat"];
+};
+
+const getPackTargets = (id: string): string[] => {
+  if (id.includes("nourrice")) return ["maternite", "ventre-plat"];
+  if (id === "pack-1") return ["ventre-plat", "drainage"];
+  if (id === "pack-2") return ["ventre-plat"];
+  if (id === "pack-3") return ["drainage"];
+  if (id === "pack-complet" || id === "pack-minceur-kaylie" || id === "pack-minceur-skinny") return ["perte-intense", "ventre-plat", "drainage"];
+  if (id === "pack-kaylie-the" || id === "pack-skinny-the") return ["perte-intense", "drainage"];
+  if (id === "pack-kaylie-minceur" || id === "pack-skinny-tisane") return ["perte-intense"];
+  return ["ventre-plat"];
+};
+
 export default function BoutiquePage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [targetFilter, setTargetFilter] = useState("all");
+  const [budgetFilter, setBudgetFilter] = useState("all");
   const [sortOption, setSortOption] = useState<"default" | "price-asc" | "price-desc">("default");
   const addItem = useCart((state) => state.addItem);
 
@@ -440,7 +463,18 @@ export default function BoutiquePage() {
     const matchCat = activeTab === "all" || activeTab === "solo" ||
       (activeTab === "capsules" && p.productType === "capsules") ||
       (activeTab === "infusions" && (p.productType === "tea" || p.productType === "herbal_tea" || p.productType === "supplement"));
-    return matchSearch && matchCat;
+    
+    // Target zone filter
+    const productTargets = getProductTargets(p.id);
+    const matchTarget = targetFilter === "all" || productTargets.includes(targetFilter);
+
+    // Budget filter
+    let matchBudget = true;
+    if (budgetFilter === "under-10") matchBudget = p.price < 10000;
+    else if (budgetFilter === "10-20") matchBudget = p.price >= 10000 && p.price <= 20000;
+    else if (budgetFilter === "above-20") matchBudget = p.price > 20000;
+
+    return matchSearch && matchCat && matchTarget && matchBudget;
   });
 
   // Sorting products
@@ -452,8 +486,20 @@ export default function BoutiquePage() {
 
   // Filter packs
   const filteredPacks = PACKS.filter((p) => {
-    return p.name.toLowerCase().includes(search.toLowerCase()) ||
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.shortDescription.toLowerCase().includes(search.toLowerCase());
+    
+    // Target zone filter
+    const packTargets = getPackTargets(p.id);
+    const matchTarget = targetFilter === "all" || packTargets.includes(targetFilter);
+
+    // Budget filter
+    let matchBudget = true;
+    if (budgetFilter === "under-10") matchBudget = p.price < 10000;
+    else if (budgetFilter === "10-20") matchBudget = p.price >= 10000 && p.price <= 20000;
+    else if (budgetFilter === "above-20") matchBudget = p.price > 20000;
+
+    return matchSearch && matchTarget && matchBudget;
   });
 
   const showSolo = activeTab === "all" || activeTab === "solo" || activeTab === "capsules" || activeTab === "infusions";
@@ -523,15 +569,16 @@ export default function BoutiquePage() {
             </div>
           </div>
 
-          {/* Search bar & Sorting Dropdown (Amélioration 18) */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full sm:max-w-md">
+          {/* Advanced Predictive Filters (Amélioration 18) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search Input */}
+            <div className="relative w-full">
               <input
                 type="text"
-                placeholder="Rechercher un produit ou un pack..."
+                placeholder="Rechercher une cure, gélules ou thé..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-4 pr-10 py-2.5 border rounded-lg text-xs focus:outline-none transition-all"
+                className="w-full pl-4 pr-10 py-3 border rounded-xl text-xs focus:outline-none transition-all"
                 style={{
                   background: "var(--color-theme-card)",
                   borderColor: "var(--color-theme-border)",
@@ -540,17 +587,54 @@ export default function BoutiquePage() {
               />
             </div>
 
-            <div className="flex gap-2 w-full sm:w-auto justify-end">
-              <div className="flex items-center gap-1 px-3 py-2 border rounded-lg text-xs bg-theme-card" style={{ borderColor: "var(--color-theme-border)" }}>
-                <ArrowUpDown className="w-3.5 h-3.5 opacity-60" />
+            {/* Target slimming target areas filter */}
+            <div className="w-full">
+              <select
+                value={targetFilter}
+                onChange={(e) => setTargetFilter(e.target.value)}
+                className="w-full px-3 py-3 border rounded-xl text-xs font-bold focus:outline-none cursor-pointer bg-theme-card"
+                style={{
+                  borderColor: "var(--color-theme-border)",
+                  color: "var(--color-theme-fg)",
+                  background: "var(--color-theme-card)",
+                }}
+              >
+                <option value="all" className="text-black">🎯 Toutes les zones cibles</option>
+                <option value="ventre-plat" className="text-black">🔥 Ventre Plat & Abdomen</option>
+                <option value="drainage" className="text-black">🌱 Drainage & Détox</option>
+                <option value="perte-intense" className="text-black">⚡ Perte de Poids Intense</option>
+                <option value="maternite" className="text-black">🍼 Maternité & Allaitement</option>
+              </select>
+            </div>
+
+            {/* Price-range/budget and sorting selectors */}
+            <div className="w-full flex gap-2">
+              <select
+                value={budgetFilter}
+                onChange={(e) => setBudgetFilter(e.target.value)}
+                className="flex-1 px-3 py-3 border rounded-xl text-xs font-bold focus:outline-none cursor-pointer bg-theme-card"
+                style={{
+                  borderColor: "var(--color-theme-border)",
+                  color: "var(--color-theme-fg)",
+                  background: "var(--color-theme-card)",
+                }}
+              >
+                <option value="all" className="text-black">💰 Tous les budgets</option>
+                <option value="under-10" className="text-black">Moins de 10 000 FCFA</option>
+                <option value="10-20" className="text-black">10 000 F - 20 000 FCFA</option>
+                <option value="above-20" className="text-black">Plus de 20 000 FCFA</option>
+              </select>
+
+              <div className="flex items-center px-3 py-3 border rounded-xl text-xs bg-theme-card" style={{ borderColor: "var(--color-theme-border)" }}>
+                <ArrowUpDown className="w-3.5 h-3.5 opacity-60 text-theme-fg mr-1" />
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as any)}
-                  className="bg-transparent text-xs font-bold focus:outline-none border-none cursor-pointer outline-none"
+                  className="bg-transparent text-xs font-bold focus:outline-none border-none cursor-pointer outline-none text-theme-fg"
                 >
                   <option value="default" className="text-black">Recommandé</option>
-                  <option value="price-asc" className="text-black">Prix : Croissant</option>
-                  <option value="price-desc" className="text-black">Prix : Décroissant</option>
+                  <option value="price-asc" className="text-black">Prix + bas</option>
+                  <option value="price-desc" className="text-black">Prix + haut</option>
                 </select>
               </div>
             </div>
